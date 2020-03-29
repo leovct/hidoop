@@ -13,10 +13,19 @@ Ce projet propose une première expérience sur le thème des applications concu
 
 
 ## Recensement des commandes principales de GIT utiles pour ce projet
-> Valentin Flageat, v1
+> Auteur : Valentin Flageat, v1
+
+### git pull
+Récupère les données du repository (serveur distant GitLab)
 
 ### git add <path>
 Ajoute les fichiers spécifiés au "pre-commit"
+
+### git commit -m "message"
+Enregistre les fichiers ajoutés au "pre-commit", le message doit stipuler les changements apportés par cette version
+
+### git push
+Envoie les données sur le repository (serveur distant GitLab)
 
 ### git reset HEAD
 Revient en arrière et calque le "pre-commit" sur le HEAD commit (dernier commit), annule donc tous les "git add"
@@ -26,15 +35,6 @@ Affiche une comparaison du projet avec le HEAD commit (dernier commit)
 
 ### git checkout <path>
 Remplace les fichiers spécifiés par ceux contenus dans le HEAD commit (dernier commit)
-
-### git commit -m "message"
-Enregistre les fichiers ajoutés au "pre-commit", le message doit stipuler les changements apportés par cette version
-
-### git push
-Envoie les données sur le repository (serveur distant GitLab)
-
-### git pull
-Récupère les données du repository (serveur distant GitLab)
 
 ### git log
 Affiche l'historique des "commit"
@@ -55,9 +55,12 @@ Rapatrie la branche spécifiée sur la branche courante, les deux branches sont 
 Supprime la branche spécifiée
 
 ### git pull origin <branch>
-Récupérer les fichiers de la branche spécifiée (saisir master pour la première utilisation) du répertoire distant
+Récupère les fichiers de la branche spécifiée (saisir master pour la première utilisation) du répertoire distant
 
-### #InitialisationSeulement# git remote add origin https://gitlab.enseeiht.fr/vflageat/Hidoop.git
+### git clone git@gitlab.enseeiht.fr:2SN/Hidoop.git
+Récupère une copie du projet complet
+
+### #InitialisationSeulement# git remote add origin git@gitlab.enseeiht.fr:2SN/Hidoop.git
 Connecte le projet local au repository (répertoire du projet) présent sur Gitlab
 
 ### #InitialisationSeulement# git remote
@@ -65,8 +68,6 @@ Affiche les dépôts distants auxquels le projet est connecté (devrait contenir
 
 ### #InitialisationSeulement# git push origin master
 Dépose le projet sur le repository (répertoire distant du projet) 
-
-
 
 
 
