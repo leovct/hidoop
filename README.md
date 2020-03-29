@@ -1,5 +1,6 @@
-# Hidoop
+# HIDOOP
 > Contributeurs : Clément Barioz, Valentin Flageat, Bptiste Gréaud, Léo Vincent
+
 Ce projet propose une première expérience sur le thème des applications concurrentes pour le calcul intensif et le traitement de masses de données. Pour cela, il s’agira :
 * De réaliser une plateforme comportant un système de fichiers adapté au traitement concurrent de masses de données, ainsi qu’un noyau d’exécution axé sur l’ordonnancement et la gestion de tâches selon le schéma « diviser pour régner » (map-reduce). L’architecture et les fonctionnalités de cette plateforme reprendront (de manière simplifiée) celles de la plateforme Hadoop.
 * De permettre de tester et évaluer cette plateforme
@@ -7,7 +8,7 @@ Ce projet propose une première expérience sur le thème des applications concu
 * Au travers de son utilisation par des applications concurrentes utilisant de manière intensive les ressources mémoire et/ou de calcul
 
 ## Utilisation
-** A compléter**
+**A compléter**
 
 
 
@@ -64,6 +65,8 @@ Affiche les dépôts distants auxquels le projet est connecté (devrait contenir
 
 ### #InitialisationSeulement# git push origin master
 Dépose le projet sur le repository (répertoire distant du projet) 
+
+
 
 
 
