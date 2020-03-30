@@ -11,7 +11,7 @@ Ce projet propose une première expérience sur le thème des applications concu
 **A compléter**
 
 ## Fonctionnement
-**A détailler?**
+**A détailler?**  
 Exemple avec l'application MyMapReduce
 * Une fois l'environnement initialisé, l'application est lancée en éxécutant le main de sa classe Java en ligne de commande (java MyMapReduce <nomfichier>).
 * Le main instancie un objet de la classe Job, paramètre son _InputFormat_ et son _InputFname_ puis éxécute sa méthode _jobStart(m)_ en passant en paramètre une instance de la classe de l'application : _j.startJob(new MyMapReduce())_
@@ -76,9 +76,9 @@ Dépose le projet sur le repository (répertoire distant du projet)
 
 
 ## Architecture HDFS
-http://lowemarius.over-blog.com/2017/08/comprendre-l-architecture-hdfs.html
-https://www.edureka.co/blog/apache-hadoop-hdfs-architecture/
-https://data-flair.training/blogs/hadoop-architecture/
+http://lowemarius.over-blog.com/2017/08/comprendre-l-architecture-hdfs.html  
+https://www.edureka.co/blog/apache-hadoop-hdfs-architecture/  
+https://data-flair.training/blogs/hadoop-architecture/  
 
 ## Template pour README.md
 https://gist.github.com/PurpleBooth/109311bb0361f32d87a2
