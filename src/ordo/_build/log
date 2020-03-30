@@ -1,0 +1,5 @@
+# dune build MainProlog.exe
+# OCAMLPARAM: unset
+$ /usr/bin/nproc > /tmp/dune37191d.output 2> /dev/null
+$ /applications/opam-2.0.4/default/bin/ocamlfind printconf path > /tmp/dune9c300e.output
+$ /applications/opam-2.0.4/default/bin/ocamlc.opt -config > /tmp/dunef231fc.output
