@@ -23,6 +23,9 @@ Exemple avec l'application MyMapReduce
 ### git add <path>
 Ajoute les fichiers spécifiés au "pre-commit"
 
+### git reset
+Annule tous les "git add" précédents
+
 ### git commit -m "message"
 Enregistre les fichiers ajoutés au "pre-commit", le message doit stipuler les changements apportés par cette version
 
