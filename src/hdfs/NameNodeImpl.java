@@ -19,6 +19,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import config.Project;
 
 public class NameNodeImpl extends UnicastRemoteObject implements NameNode {
+	/**
+	 * Constants
+	 */
+	private static final String noDataNodeError = "#writeChunkRequest : "
+			+ "No DataNode server avalaible";
 	private static final long serialVersionUID = 1L;
 	private static final int timeout = 400;
 	private static final String backupFile = "data/namenode-data";
@@ -60,7 +65,6 @@ public class NameNodeImpl extends UnicastRemoteObject implements NameNode {
 		public void run() {
 			this.writeData();
 		}
-
 		private synchronized void writeData() {
 			try {
 				ObjectOutputStream outputStream = new ObjectOutputStream(new FileOutputStream(backupFile));
@@ -83,7 +87,7 @@ public class NameNodeImpl extends UnicastRemoteObject implements NameNode {
 		this.dataWriter = new DataWriter();
 		for (String server : Project.DATANODES) {
 			try {
-				if (InetAddress.getByName(server).isReachable(timeout)) { //FIXME Changer le check : vérifier que l'objet DataNode répond bien
+				if (InetAddress.getByName(server).isReachable(timeout)) { //FIXME Change check : check that DataNode gives response
 					this.avalaibleServers.add(server);
 				}
 			} catch (UnknownHostException e) {
@@ -114,25 +118,24 @@ public class NameNodeImpl extends UnicastRemoteObject implements NameNode {
 
 	@Override
 	public ArrayList<String> writeChunkRequest(int replicationFactor) throws RemoteException {
-		// FIXME Implémenter le meilleur choix parmi les serveurs dispos
+		// FIXME Implement best choice pick among avaIlable servers
 		int numberReturned = this.defaultReplicationFactor > this.avalaibleServers.size() ?
 				this.defaultReplicationFactor : this.avalaibleServers.size();
 		if (numberReturned > 0) {
 			ArrayList<String> result = new ArrayList<String>();
-			Collections.shuffle(this.avalaibleServers); //Random server pick
+			Collections.shuffle(this.avalaibleServers); //FIXME Random server pick
 			for (int i = 0 ; i < numberReturned ; i++) {
 				result.add(this.avalaibleServers.get(i));
 			}
 			return result;
 		} else {
-			System.err.println("#writeChunkRequest : No DataNode server avalaible");
+			System.err.println(noDataNodeError);
 			return null;
 		}
 	}
 
 	@Override
 	public ArrayList<String> readFileRequest(String fileName) throws RemoteException {
-		// FIXME FIXME add dans metadata : ici ou suite à une notification du datanode?
 		if (!this.metadata.containsKey(fileName)) {
 			System.err.println("#readFileRequest : file " + fileName
 					+ " unknown to NameNode");
@@ -152,7 +155,7 @@ public class NameNodeImpl extends UnicastRemoteObject implements NameNode {
 					if (this.avalaibleServers.contains(server)) {
 						result.add(server);
 						avalaibleReplicaServer = true;
-						break; //FIXME RENVOYER UN SEUL SERVEUR?
+						break;
 					}
 					if (!avalaibleReplicaServer) {
 						System.err.println("#readFileRequest : No server containing a replica "
@@ -204,7 +207,7 @@ public class NameNodeImpl extends UnicastRemoteObject implements NameNode {
 		if (!this.metadata.containsKey(fileName)) {
 			fileData = new FileData(fileSize, chunkSize, replicationFactor); //FIXME file size
 			fileData.addChunkLocation(chunkNumber, server);
-			this.metadata.put(fileName, fileData); //FIXME order of chunks number
+			this.metadata.put(fileName, fileData);
 		} else {
 			fileData = this.metadata.get(fileName);
 			if (fileData.getChunkSize() != chunkSize) {
@@ -212,32 +215,39 @@ public class NameNodeImpl extends UnicastRemoteObject implements NameNode {
 					fileData.setFileSize(fileSize);
 					fileData.setChunkSize(chunkSize);
 					fileData.setReplicationFactor(replicationFactor);
-					//FIXME On garde les anciens chunk ou pas?
+					fileData.getChunkHandles().clear();
 					System.err.println("#warning : data for file "
 							+ fileName + " has been overwritten by new ones");
-				} else {
+				} else { //Received a chunk from a known file with an unknown chunk size : the chunk is the result of a map operation 
 					fileData.setChunkSize(chunkSize);
-					System.out.println(">>>Map result of chunk "
-							+ chunkNumber + " from file " + fileName
-							+ "stored on server " + server);
 				}
 			}
-			fileData.addChunkLocation(chunkNumber, server); //FIXME order of chunks number
+			fileData.addChunkLocation(chunkNumber, server);
 		}
-		//Run data writing in backup file
-		(new Thread(this.dataWriter)).start();
+		(new Thread(this.dataWriter)).start(); //Run data writing in backup file
 		this.printMetaData();
 	}
-	
+
 	@Override
 	public void allChunkWriten(String fileName) {
 		FileData fileData;
 		if (!this.metadata.containsKey(fileName)) { //Empty file
-			fileData = new FileData(0, 0, 1); //FIXME file size
-			this.metadata.put(fileName, fileData); //FIXME order of chunks number
+			fileData = new FileData(0, 0, 1);
+			this.metadata.put(fileName, fileData);
 		} else {
 			fileData = metadata.get(fileName);
 			fileData.setFileSize(fileData.getChunkHandles().size());
+		}
+		this.printMetaData();
+	}
+
+	@Override
+	public void chunkDeleted(String fileName, int chunkNumber, String server) {
+		if (this.metadata.containsKey(fileName)) {
+			FileData fileData = this.metadata.get(fileName);
+			if (fileData.containsChunkHandle(chunkNumber)) {
+				fileData.getChunkHundle(chunkNumber).remove(server);
+			}
 		}
 	}
 
@@ -294,19 +304,8 @@ public class NameNodeImpl extends UnicastRemoteObject implements NameNode {
 		try {
 			System.out.println(InetAddress.getLocalHost().getHostAddress());
 		} catch (UnknownHostException e1) {
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
-		
-		
-		long fileLength = (new File("data/filesample/filesample.txt").length());
-		System.out.println("file length : "+fileLength);
-		System.out.println("fileLength % Project.CHUNK_SIZE : " + fileLength % Project.CHUNK_SIZE);
-		System.out.println("fileLength / Project.CHUNK_SIZE : " + fileLength / Project.CHUNK_SIZE);
-		int fileSize = fileLength % Project.CHUNK_SIZE > 0 ? (int) (fileLength / Project.CHUNK_SIZE + 1)
-				: (int) (fileLength / Project.CHUNK_SIZE);
-		System.out.println(fileSize);
-
 
 		try{
 			LocateRegistry.createRegistry(Project.PORT_NAMENODE);

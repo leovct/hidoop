@@ -7,7 +7,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.rmi.Naming;
@@ -28,17 +27,10 @@ public class DataNodeImpl extends UnicastRemoteObject implements DataNode, Runna
 	private NameNode nameNode;
 
 	/**
-	 *  Hashmap locale au serveur :
-	 *  - String : key - ensembles des noms de fichiers dont au moins 1 chunk a été reçu
-	 *  - ArrayList<Integer> : value - numéros des chunk reçus pour chaque fichier
-	 */
-	/*
-	static HashMap<String, ArrayList<Integer>> chunks = new HashMap<String, ArrayList<Integer>>();
-	private static final String unknownFileNote = ">>> HdfsServeur Note : File requested "
-			+ "does not exist on this server";
+	 * Constants
 	 */
 	private static final int bufferSize = 100;
-	private static String tagHdfsServer = "-serverchunk";
+	private static String tagDataNode = "-serverchunk";
 	private static final String messageHeaderError = "# HdfsServeur Error : Message header "
 			+ "is incorrect or non-existent\nExpected :\n - Command type (Commande object)"
 			+ "\n - File name (String object)\n - File extension (String object)"
@@ -66,7 +58,6 @@ public class DataNodeImpl extends UnicastRemoteObject implements DataNode, Runna
 			}
 		}
 	}
-
 
 	/**
 	 * Constructor
@@ -140,7 +131,7 @@ public class DataNodeImpl extends UnicastRemoteObject implements DataNode, Runna
 						break; //FIXME sortie du if si mauvaise réception
 					}
 					bos = new BufferedOutputStream(new FileOutputStream(
-							Project.DATANODE_FILES_PATH+fileName+tagHdfsServer+chunkNumber+fileExtension), bufferSize);
+							Project.DATANODE_FILES_PATH+fileName+tagDataNode+chunkNumber+fileExtension), bufferSize);
 					while((nbRead = socketInputStream.read(buf)) != -1) {
 						bos.write(buf, 0, nbRead);
 					}
@@ -151,7 +142,7 @@ public class DataNodeImpl extends UnicastRemoteObject implements DataNode, Runna
 							socketPropagateChunkCopy = new Socket(server, Project.PORT_DATANODE);
 							socketOutputStream = new ObjectOutputStream(socketPropagateChunkCopy.getOutputStream());
 							bis = new BufferedInputStream(new FileInputStream(
-									Project.DATANODE_FILES_PATH+fileName+tagHdfsServer+chunkNumber+fileExtension), bufferSize);
+									Project.DATANODE_FILES_PATH+fileName+tagDataNode+chunkNumber+fileExtension), bufferSize);
 							socketOutputStream.writeObject(Command.CMD_WRITE);
 							socketOutputStream.writeObject(fileName);
 							socketOutputStream.writeObject(fileExtension);
@@ -169,25 +160,21 @@ public class DataNodeImpl extends UnicastRemoteObject implements DataNode, Runna
 							e.printStackTrace();
 						}
 					}
-					// Notify NameNode a chunk has been writen on this server
-					this.nameNode.chunkWriten(fileName+fileExtension, -1, Project.CHUNK_SIZE, repFactor, 
-							chunkNumber, InetAddress.getLocalHost().getHostAddress()); //FIXME Chunk Size
-					System.out.println(">>> Chunk received : "+Project.DATANODE_FILES_PATH+fileName+tagHdfsServer+chunkNumber+fileExtension);
+					System.out.println(">>> Chunk received : "+Project.DATANODE_FILES_PATH+fileName+tagDataNode+chunkNumber+fileExtension);
 				}
 
 				else if (command == Command.CMD_DELETE) {
-					if ((new File(Project.DATANODE_FILES_PATH+fileName+tagHdfsServer+chunkNumber+fileExtension).delete())) 
-						System.out.println(">>> Chunk deleted : "+Project.DATANODE_FILES_PATH+fileName+tagHdfsServer+chunkNumber+fileExtension);
+					if ((new File(Project.DATANODE_FILES_PATH+fileName+tagDataNode+chunkNumber+fileExtension).delete())) 
+						System.out.println(">>> Chunk deleted : "+Project.DATANODE_FILES_PATH+fileName+tagDataNode+chunkNumber+fileExtension);
 					else System.err.println(chunkNotFoundError 
-							+ " : " +Project.DATANODE_FILES_PATH+fileName+tagHdfsServer+chunkNumber+fileExtension);
+							+ " : " +Project.DATANODE_FILES_PATH+fileName+tagDataNode+chunkNumber+fileExtension);
 				}
 
 				else if (command == Command.CMD_READ) {
 					socketOutputStream = new ObjectOutputStream(communicationSocket.getOutputStream());
-					// Attention : si le serveur est relancé, il aura oublié les fichiers qu'il connaît
-					if ((new File(Project.DATANODE_FILES_PATH+fileName+tagHdfsServer+chunkNumber+fileExtension)).exists()) {
+					if ((new File(Project.DATANODE_FILES_PATH+fileName+tagDataNode+chunkNumber+fileExtension)).exists()) {
 						try {
-							bis = new BufferedInputStream(new FileInputStream(Project.DATANODE_FILES_PATH+fileName+tagHdfsServer+chunkNumber+fileExtension), bufferSize);
+							bis = new BufferedInputStream(new FileInputStream(Project.DATANODE_FILES_PATH+fileName+tagDataNode+chunkNumber+fileExtension), bufferSize);
 							socketOutputStream.writeObject(Command.CMD_READ);
 							socketOutputStream.writeObject(fileName);
 							socketOutputStream.writeObject(fileExtension);
@@ -202,9 +189,9 @@ public class DataNodeImpl extends UnicastRemoteObject implements DataNode, Runna
 							e.printStackTrace();
 						}
 					} else System.err.println(chunkNotFoundError 
-							+ " : " +Project.DATANODE_FILES_PATH+fileName+tagHdfsServer+chunkNumber+fileExtension);
+							+ " : " +Project.DATANODE_FILES_PATH+fileName+tagDataNode+chunkNumber+fileExtension);
 					try {
-						socketOutputStream.writeObject(null); //signal that transmission is complete
+						socketOutputStream.writeObject(null); //Signal that transmission is complete
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
@@ -234,8 +221,7 @@ public class DataNodeImpl extends UnicastRemoteObject implements DataNode, Runna
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		//Connection to NameNode
-		try {
+		try { //Connection to NameNode
 			NameNode nameNode = (NameNode) Naming.lookup("//"+Project.NAMENODE+":"+Project.PORT_NAMENODE+"/NameNode");
 			(new Thread(new DataNodeImpl(nameNode))).start();
 		} catch (NotBoundException e) {
@@ -244,5 +230,4 @@ public class DataNodeImpl extends UnicastRemoteObject implements DataNode, Runna
 			e.printStackTrace();
 		}				
 	}
-
 }

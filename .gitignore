@@ -2,7 +2,6 @@
 #!src/
 
 # ignore everything in the "src" directory, except:
-# "hdfs"
 #!src/hdfs/
 
 # ignore .class and .txt files
@@ -10,19 +9,7 @@
 *.txt
 
 # ignore specific files
-#src/hdfs/CFiche*
-#src/hdfs/RFiche*
-#src/hdfs/NameNode*
-#src/hdfs/HdfsClientRecuperation.java
-#src/hdfs/HdfsServer1.java
-#src/hdfs/HdfsServerRecuperation.java
-#config/*
-#data/generate.sh
-#doc/*
-#src/config/*
-#src/application/*
-#src/map/*
-#src/ordo/*
 .settings
 .project*
 .classpath*
+*namenode-data

@@ -5,7 +5,7 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 
 /**
- * Namenode Interface
+ * NameNode Interface
  */
 public interface NameNode extends Remote {
 	/**
@@ -13,7 +13,7 @@ public interface NameNode extends Remote {
 	 * with NameNode's default replication factor
 	 *
 	 * @return ArrayList<String> containing :
-	 * [primary namenode address,  secondary namenode address (first replica location),...]
+	 * {primary DataNode address, secondary DataNode address (first replica location),...}
 	 */
 	public ArrayList<String> writeChunkRequest() throws RemoteException;
 	
@@ -24,7 +24,7 @@ public interface NameNode extends Remote {
 	 * @param replicationFactor
 	 * @return 
 	 * @return ArrayList<String> containing :
-	 * [primary namenode address,  secondary namenode address (first replica location),...]
+	 * {primary DataNode address, secondary DataNode address (first replica location),...}
 	 */
 	public ArrayList<String> writeChunkRequest(int replicationFactor) throws RemoteException;
 	
@@ -54,7 +54,7 @@ public interface NameNode extends Remote {
 	 * @param chunkSize size of the chunk (octet)
 	 * @param replicationFactor replication factor of the chunk
 	 * @param chunkNumber number of the chunk in the file
-	 * @param server Server containing the chunk
+	 * @param server server containing the chunk
 	 * @throws RemoteException
 	 */
 	public void chunkWriten(String fileName, int fileSize, int chunkSize, int replicationFactor, int chunkNumber, String server) throws RemoteException;
@@ -66,4 +66,13 @@ public interface NameNode extends Remote {
 	 * @param fileName specified file
 	 */
 	public void allChunkWriten(String fileName) throws RemoteException;
+	
+	/**
+	 * Notify the NameNode that a chunk has been deleted on a server
+	 * 
+	 * @param fileName name of the file the chunk is part of
+	 * @param chunkNumber number of the chunk in the file
+	 * @param server server that contained the chunk
+	 */
+	public void chunkDeleted(String fileName, int chunkNumber, String server);
 }

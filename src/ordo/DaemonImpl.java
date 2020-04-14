@@ -48,6 +48,11 @@ public class DaemonImpl extends UnicastRemoteObject implements Daemon {
         try {
             // Enregistrement du démon dans le registre
 	    adresse = InetAddress.getLocalHost();
+	    	System.out.println(InetAddress.getLocalHost().getHostAddress());
+	    	System.out.println(InetAddress.getByName("ohm.enseeiht.fr").getHostAddress());
+	    	System.out.println("Is reachable : "+InetAddress.getByName("ohm.enseeiht.fr").isReachable(1000)); // Fonctionne quand le VPN est ON
+	    	// Naming.rebind("//"+InetAddress.getLocalHost().getHostAddress()+":"+Project.PORT_DAEMON+"/DaemonImpl"+num,demon);
+	    	// + ITERER SUR LES PORTS POSSIBLES
             System.out.println("Enregistrement du démon dans le registre");
             DaemonImpl demon = new DaemonImpl();
             Naming.rebind("//"+adresse.getHostName().split("\\.",2)[0]+":"+Project.PORT_DAEMON+"/DaemonImpl"+num,demon);

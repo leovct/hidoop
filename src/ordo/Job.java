@@ -44,10 +44,10 @@ public class Job implements JobInterface {
     	// Récupération de la liste des démons
     	System.out.println("Récupération de la liste des Daemons ...");
         List<Daemon> demons = new ArrayList<>();
-        for(int i = 0; i < Project.NBR_DATANODE; i++) {
+        for(int i = 0; i < Project.NUMBER_OF_DATANODE; i++) {
         	try {
-        		System.out.println("On récupère le stub de : //"+Project.HOST[i]+":4321/DaemonImpl"+ (i+1) );
-    			demons.add((Daemon) Naming.lookup("//"+Project.HOST[i]+":4321/DaemonImpl"+ (i+1) ));
+        		System.out.println("On récupère le stub de : //"+Project.DATANODES[i]+":4321/DaemonImpl"+ (i+1) );
+    			demons.add((Daemon) Naming.lookup("//"+Project.DATANODES[i]+":4321/DaemonImpl"+ (i+1) ));
     		} catch (Exception e) {
     			e.printStackTrace();
     		}
@@ -61,16 +61,16 @@ public class Job implements JobInterface {
 	try {
         // Récupération du NameNode et de la liste des chunks
 		System.out.println("On récupère le stub de : //bilbo:"+Project.PORT_NAMENODE+"/NameNode");
-		nm = (NameNode)Naming.lookup("//"+Project.NAMENODEHOST+":"+Project.PORT_NAMENODE+"/NameNode");
+		nm = (NameNode)Naming.lookup("//"+Project.NAMENODE+":"+Project.PORT_NAMENODE+"/NameNode");
 		System.out.println("NameNode récupéré !!\n");
-		RFiche cl = nm.Consulter(getInputFName());
-		setChunkList(cl.getNode());
+		//RFiche cl = nm.Consulter(getInputFName());
+		//setChunkList(cl.getNode());
         // Ajout temporaire dans le NameNode des fichiers résultats des maps
         for (String nomKey : getChunkList().keySet()) {
            	mapList.put(getInputFName().split("\\.")[0]+(nomKey.split("\\.")[0]).split(getInputFName().split("\\.")[0])[1]+"-map.txt",getChunkList().get(nomKey)); 
         }
-		CFicheImpl l = new CFicheImpl(getInputFName().split("\\.")[0]+"-map.txt",mapList);
-            	nm.Ajouter(l);
+		//CFicheImpl l = new CFicheImpl(getInputFName().split("\\.")[0]+"-map.txt",mapList);
+          //  	nm.Ajouter(l);
     	} catch (Exception e) {
 		e.printStackTrace();
 	} 
@@ -96,7 +96,7 @@ public class Job implements JobInterface {
 			// On récupère le nom de la machine qui possède le chunk
     			String machine = getChunkList().get(chunk);
 			// On récupère le numéro du démon sur lequel lancer le map
-    			int numDaemon = Arrays.asList(Project.HOST).indexOf(machine);
+    			int numDaemon = Arrays.asList(Project.DATANODES).indexOf(machine);
 			// On récupère le bon démon dans la liste des démons
 			    Daemon d = demons.get(numDaemon);
 			// On change le nom des Formats pour qu'ils correspondent aux fragments
@@ -123,7 +123,7 @@ public class Job implements JobInterface {
 	// On appelle hdfs.read pour récupérer tous les résultats des maps
         try {
         	HdfsClient.HdfsRead(getInputFName().split("\\.")[0] +"-map.txt" ,getOutputFName());
-		nm.Supprimer(getInputFName().split("\\.")[0] +"-map.txt");
+		//nm.Supprimer(getInputFName().split("\\.")[0] +"-map.txt");
         } catch (Exception e) {
                 e.printStackTrace();
         } 
