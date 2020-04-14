@@ -7,37 +7,74 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.rmi.Naming;
+import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
-import java.util.HashMap;
 
 import config.Project;
-import config.Project.Commande;
+import config.Project.Command;
 
-public class DataNodeImpl extends UnicastRemoteObject implements DataNode {
+public class DataNodeImpl extends UnicastRemoteObject implements DataNode, Runnable {
 	private static final long serialVersionUID = 1L;
+
+	/**
+	 * Master NameNode
+	 */
+	private NameNode nameNode;
+
 	/**
 	 *  Hashmap locale au serveur :
 	 *  - String : key - ensembles des noms de fichiers dont au moins 1 chunk a été reçu
 	 *  - ArrayList<Integer> : value - numéros des chunk reçus pour chaque fichier
 	 */
+	/*
 	static HashMap<String, ArrayList<Integer>> chunks = new HashMap<String, ArrayList<Integer>>();
+	private static final String unknownFileNote = ">>> HdfsServeur Note : File requested "
+			+ "does not exist on this server";
+	 */
 	private static final int bufferSize = 100;
 	private static String tagHdfsServer = "-serverchunk";
 	private static final String messageHeaderError = "# HdfsServeur Error : Message header "
 			+ "is incorrect or non-existent\nExpected :\n - Command type (Commande object)"
-			+ "\n - File name (String object)\n - File extension (String object)";
-	private static final String unknownFileNote = ">>> HdfsServeur Note : File requested "
-			+ "does not exist on this server";
-	private static final String chunkNotFoundError = "# HdfsServeur Error : Couldn't find chunk "
-			+ "on this server anymore";
+			+ "\n - File name (String object)\n - File extension (String object)"
+			+ "\n - Chunk Number (Integer object)";
+	private static final String chunkNotFoundError = "# HdfsServeur Error : Couldn't find required "
+			+ "chunk on this server";
+	private static final String nameNodeNotBoundError = "# HdfsClient READ  : NameNode is not "
+			+ "bound in registry, leaving process";
 
-	protected DataNodeImpl() throws RemoteException {
-		super();
-		// TODO Auto-generated constructor stub
+	/**
+	 * Runnable class performing operations
+	 * when NameNode receives a command
+	 * (Nested class)
+	 */
+	class TaskExecutor implements Runnable {
+		private Command command;
+		public TaskExecutor(Command command) {
+			this.command = command;
+		}
+
+		@Override
+		public void run() {
+			if (this.command == Command.CMD_WRITE) {
+
+			}
+		}
+	}
+
+
+	/**
+	 * Constructor
+	 * @param nameNode stub for the NameNode of the (unique) cluster this DataNode belongs to
+	 * @throws RemoteException
+	 */
+	protected DataNodeImpl(NameNode nameNode) throws RemoteException {
+		this.nameNode = nameNode;
 	}
 
 	/**
@@ -47,112 +84,127 @@ public class DataNodeImpl extends UnicastRemoteObject implements DataNode {
 	 * @param chunkName le nom du chunk sur le serveur
 	 * @return un booleen, true en cas de réussite
 	 */
-	public boolean notifyNameNode(String fileName, String chunkName) {
+	public boolean notifyNameNode(String fileName, String chunkName) throws RemoteException {
 		return true;
 	}
 
-	/**
-	 * main du DataNode
-	 * @param args
-	 */
-	public static void main(String[] args) {
+	@Override
+	public void run() {
 		try {
 			// Creation du serveur
 			ObjectInputStream socketInputStream;
 			ObjectOutputStream socketOutputStream;
 			BufferedInputStream bis;
 			BufferedOutputStream bos;
-			Commande command = null;
+			Command command = null;
 			String fileName = "", fileExtension = "";
-			Socket communicationSocket;
-			ServerSocket serverSocket = new ServerSocket(Project.PORT_HDFSSERVEURASUP[0]);
+			Socket communicationSocket, socketPropagateChunkCopy;
+			ServerSocket serverSocket = new ServerSocket(Project.PORT_DATANODE);
 			byte[] buf = new byte[bufferSize], serverCommandBuf = new byte[1];
-			int nbRead, chunkNumber = -1;
+			int nbRead, repFactor, chunkNumber = -1;
 			boolean serverStop = false;
+			ArrayList<String> copiesLocations = new ArrayList<String>();
 
 			System.out.println(">>> Server initialisation...");
 			while (!serverStop) {
 				// Attente d'une connexion
-				System.out.println(">>> [HDFSSERVER] Awaiting a connection");
+				System.out.println(">>> [DATANODE] Awaiting a connection");
 				communicationSocket = serverSocket.accept();
 				System.out.println(">>> Connection received");
 
 				// Reception de la requete du client (commande et nom du fichier a traiter)
 				socketInputStream = new ObjectInputStream(communicationSocket.getInputStream());
 				try {
-					command = (Commande) socketInputStream.readObject();
+					command = (Command) socketInputStream.readObject();
 					fileName = (String) socketInputStream.readObject();
 					fileExtension = (String) socketInputStream.readObject();
-					System.out.println(">>> Client's request : " + command + " " + fileName+fileExtension);
+					chunkNumber = (int) socketInputStream.readObject();
+					System.out.println(">>> Client's request : " + command + " " 
+							+ fileName+fileExtension + " chunk " + chunkNumber);
 				} catch (Exception e) {
 					System.err.println(messageHeaderError);
 				}
 
-				/// CMD_WRITE
-				/////// £££££££££££££££££££££££££ NOTE : VOIR POUR RECEVOIR SEULEMENT LE NOM DE FICHIER SANS LE DOSSIER?
-				if (command == Commande.CMD_WRITE) {
+				if (command == Command.CMD_WRITE) {
 					try {
-						chunkNumber = (int) socketInputStream.readObject();
+						//fileSize = (int) socketInputStream.readObject();
+						repFactor = (int) socketInputStream.readObject();
+						for (int i = 0 ; i < repFactor - 1 ; i++) {
+							copiesLocations.add((String) socketInputStream.readObject());
+						}
 					} catch (Exception e) {
-						System.err.println(messageHeaderError + "\n - Chunk Number (Integer object)");
+						System.err.println(messageHeaderError + "\n - File Size (Integer object)"
+								+ "\n - Replication Factor (Integer object)"
+								+ "\n - Name of the servers storing chunk copies (String objects, if Replication Factor > 1)");
 						e.printStackTrace();
+						break; //FIXME sortie du if si mauvaise réception
 					}
-					bos = new BufferedOutputStream(new FileOutputStream(fileName+tagHdfsServer+chunkNumber+fileExtension), bufferSize);
+					bos = new BufferedOutputStream(new FileOutputStream(
+							Project.DATANODE_FILES_PATH+fileName+tagHdfsServer+chunkNumber+fileExtension), bufferSize);
 					while((nbRead = socketInputStream.read(buf)) != -1) {
 						bos.write(buf, 0, nbRead);
 					}
 					bos.close();
-					// Ajout de l'information de réception dans la HashMap
-					if (!chunks.containsKey(fileName+fileExtension)) chunks.put(fileName+fileExtension, new ArrayList<Integer>());
-					if (!chunks.get(fileName+fileExtension).contains(chunkNumber)) chunks.get(fileName+fileExtension).add(chunkNumber);
-					System.out.println(">>> Chunk received : "+fileName+tagHdfsServer+chunkNumber+fileExtension);
-				}
 
-				else if (command == Commande.CMD_DELETE) {
-					// Attention : si le serveur est relancé, il aura oublié les fichiers qu'il connaît
-					if (!chunks.containsKey(fileName+fileExtension)) System.out.println(unknownFileNote);
-					else {
-						for (int chunk : chunks.get(fileName+fileExtension)) {
-							if ((new File(fileName+tagHdfsServer+chunk+fileExtension).delete())) 
-								System.out.println(">>> Chunk deleted : "+fileName+tagHdfsServer+chunk+fileExtension);
-							else System.err.println(chunkNotFoundError 
-									+ " : " +fileName+tagHdfsServer+chunk+fileExtension);
+					for (String server : copiesLocations) {
+						try {
+							socketPropagateChunkCopy = new Socket(server, Project.PORT_DATANODE);
+							socketOutputStream = new ObjectOutputStream(socketPropagateChunkCopy.getOutputStream());
+							bis = new BufferedInputStream(new FileInputStream(
+									Project.DATANODE_FILES_PATH+fileName+tagHdfsServer+chunkNumber+fileExtension), bufferSize);
+							socketOutputStream.writeObject(Command.CMD_WRITE);
+							socketOutputStream.writeObject(fileName);
+							socketOutputStream.writeObject(fileExtension);
+							socketOutputStream.writeObject(chunkNumber);
+							socketOutputStream.writeObject(repFactor);
+							while((nbRead = bis.read(buf)) != -1) {
+								socketOutputStream.write(buf, 0, nbRead);
+							}
+							socketOutputStream.close();
+							socketPropagateChunkCopy.close();
+							bis.close();
+							System.out.println(">>> Chunk n°" + chunkNumber + " sent on server "
+									+ server);
+						} catch (Exception e) {
+							e.printStackTrace();
 						}
-						chunks.remove(fileName+fileExtension);
-						System.out.println(">>> All chunks from " + fileName + fileExtension
-								+ " have been deleted from this server");
 					}
+					// Notify NameNode a chunk has been writen on this server
+					this.nameNode.chunkWriten(fileName+fileExtension, -1, Project.CHUNK_SIZE, repFactor, 
+							chunkNumber, InetAddress.getLocalHost().getHostAddress()); //FIXME Chunk Size
+					System.out.println(">>> Chunk received : "+Project.DATANODE_FILES_PATH+fileName+tagHdfsServer+chunkNumber+fileExtension);
 				}
 
-				else if (command == Commande.CMD_READ) {
+				else if (command == Command.CMD_DELETE) {
+					if ((new File(Project.DATANODE_FILES_PATH+fileName+tagHdfsServer+chunkNumber+fileExtension).delete())) 
+						System.out.println(">>> Chunk deleted : "+Project.DATANODE_FILES_PATH+fileName+tagHdfsServer+chunkNumber+fileExtension);
+					else System.err.println(chunkNotFoundError 
+							+ " : " +Project.DATANODE_FILES_PATH+fileName+tagHdfsServer+chunkNumber+fileExtension);
+				}
+
+				else if (command == Command.CMD_READ) {
 					socketOutputStream = new ObjectOutputStream(communicationSocket.getOutputStream());
 					// Attention : si le serveur est relancé, il aura oublié les fichiers qu'il connaît
-					if (!chunks.containsKey(fileName+fileExtension)) System.out.println(unknownFileNote);
-					else {
-						for (int chunk : chunks.get(fileName+fileExtension)) {
-							if ((new File(fileName+tagHdfsServer+chunk+fileExtension)).exists()) {
-								try {
-									bis = new BufferedInputStream(new FileInputStream(fileName+tagHdfsServer+chunk+fileExtension), bufferSize);
-									socketOutputStream.writeObject(Commande.CMD_READ);
-									socketOutputStream.writeObject(fileName);//tempOutput.getFname());
-									socketOutputStream.writeObject(fileExtension);
-									socketOutputStream.writeObject(chunk);
-									while((nbRead = bis.read(buf)) != -1) {
-										socketOutputStream.write(buf, 0, nbRead);
-									}
-									bis.close();
-									System.out.println(">>> Chunk n°" + chunk + " from file " + fileName + fileExtension
-											+ "sent to client " + Project.NAMENODEHOST);
-								} catch (Exception e) {
-									e.printStackTrace();
-								}
-							} 
-							else System.err.println(chunkNotFoundError 
-									+ " : " +fileName+tagHdfsServer+chunk+fileExtension);
+					if ((new File(Project.DATANODE_FILES_PATH+fileName+tagHdfsServer+chunkNumber+fileExtension)).exists()) {
+						try {
+							bis = new BufferedInputStream(new FileInputStream(Project.DATANODE_FILES_PATH+fileName+tagHdfsServer+chunkNumber+fileExtension), bufferSize);
+							socketOutputStream.writeObject(Command.CMD_READ);
+							socketOutputStream.writeObject(fileName);
+							socketOutputStream.writeObject(fileExtension);
+							socketOutputStream.writeObject(chunkNumber);
+							while((nbRead = bis.read(buf)) != -1) {
+								socketOutputStream.write(buf, 0, nbRead);
+							}
+							bis.close();
+							System.out.println(">>> Chunk n°" + chunkNumber + " from file " + fileName + fileExtension
+									+ " sent to client");
+						} catch (Exception e) {
+							e.printStackTrace();
 						}
-					}
+					} else System.err.println(chunkNotFoundError 
+							+ " : " +Project.DATANODE_FILES_PATH+fileName+tagHdfsServer+chunkNumber+fileExtension);
 					try {
-						socketOutputStream.writeObject(null); // On signale que la communication est terminée
+						socketOutputStream.writeObject(null); //signal that transmission is complete
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
@@ -161,11 +213,11 @@ public class DataNodeImpl extends UnicastRemoteObject implements DataNode {
 				socketInputStream.close();
 				communicationSocket.close();
 
-				// Arrêt du serveur
+				//Quit server
 				if (System.in.available() > 0) {
 					if (System.in.read(serverCommandBuf) == 1) {
 						if ((new String(serverCommandBuf)).equals("q")) serverStop = true;
-						else System.out.println(">>> [HDFSSERVER] Entry detected, type 'q' then Enter to exit");
+						else System.out.println(">>> [DATANODE] Entry detected, type 'q' then Enter to exit");
 					}
 					while (System.in.available()>0) System.in.read();
 				}
@@ -174,6 +226,23 @@ public class DataNodeImpl extends UnicastRemoteObject implements DataNode {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	/**
+	 * Main
+	 * Initializes a DataNodeImpl instance and bounds it to the RMI registry
+	 * @param args
+	 */
+	public static void main(String[] args) {
+		//Connection to NameNode
+		try {
+			NameNode nameNode = (NameNode) Naming.lookup("//"+Project.NAMENODE+":"+Project.PORT_NAMENODE+"/NameNode");
+			(new Thread(new DataNodeImpl(nameNode))).start();
+		} catch (NotBoundException e) {
+			System.err.println(nameNodeNotBoundError);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}				
 	}
 
 }

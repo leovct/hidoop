@@ -1,6 +1,7 @@
 package hdfs;
 
 import java.rmi.Remote;
+import java.rmi.RemoteException;
 	
 /**
  * Implémentation du DataNode d'un serveur
@@ -16,5 +17,5 @@ public interface DataNode extends Remote {
 	 * @param chunkName le nom du chunk sur le serveur
 	 * @return un booleen, true en cas de réussite
 	 */
-	public boolean notifyNameNode(String fileName, String chunkName);
+	public boolean notifyNameNode(String fileName, String chunkName) throws RemoteException;
 }

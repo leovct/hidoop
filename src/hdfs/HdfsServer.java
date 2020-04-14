@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import config.Project;
-import config.Project.Commande;
+import config.Project.Command;
 
 
 /**
@@ -47,10 +47,10 @@ public class HdfsServer extends Thread {
 			ObjectOutputStream socketOutputStream;
 			BufferedInputStream bis;
 			BufferedOutputStream bos;
-			Commande command = null;
+			Command command = null;
 			String fileName = "", fileExtension = "";
 			Socket communicationSocket;
-			ServerSocket serverSocket = new ServerSocket(Project.PORT_HDFSSERVEURASUP[0]);
+			ServerSocket serverSocket = new ServerSocket(Project.PORT[0]);
 			byte[] buf = new byte[bufferSize], serverCommandBuf = new byte[1];
 			int nbRead, chunkNumber = -1;
 			boolean serverStop = false;
@@ -65,7 +65,7 @@ public class HdfsServer extends Thread {
 				// Reception de la requete du client (commande et nom du fichier a traiter)
 				socketInputStream = new ObjectInputStream(communicationSocket.getInputStream());
 				try {
-					command = (Commande) socketInputStream.readObject();
+					command = (Command) socketInputStream.readObject();
 					fileName = (String) socketInputStream.readObject();
 					fileExtension = (String) socketInputStream.readObject();
 					System.out.println(">>> Client's request : " + command + " " + fileName+fileExtension);
@@ -75,7 +75,7 @@ public class HdfsServer extends Thread {
 
 				/// CMD_WRITE
 				/////// £££££££££££££££££££££££££ NOTE : VOIR POUR RECEVOIR SEULEMENT LE NOM DE FICHIER SANS LE DOSSIER?
-				if (command == Commande.CMD_WRITE) {
+				if (command == Command.CMD_WRITE) {
 					try {
 						chunkNumber = (int) socketInputStream.readObject();
 					} catch (Exception e) {
@@ -93,7 +93,7 @@ public class HdfsServer extends Thread {
 					System.out.println(">>> Chunk received : "+fileName+tagHdfsServer+chunkNumber+fileExtension);
 				}
 
-				else if (command == Commande.CMD_DELETE) {
+				else if (command == Command.CMD_DELETE) {
 					// Attention : si le serveur est relancé, il aura oublié les fichiers qu'il connaît
 					if (!chunks.containsKey(fileName+fileExtension)) System.out.println(unknownFileNote);
 					else {
@@ -109,7 +109,7 @@ public class HdfsServer extends Thread {
 					}
 				}
 
-				else if (command == Commande.CMD_READ) {
+				else if (command == Command.CMD_READ) {
 					socketOutputStream = new ObjectOutputStream(communicationSocket.getOutputStream());
 					// Attention : si le serveur est relancé, il aura oublié les fichiers qu'il connaît
 					if (!chunks.containsKey(fileName+fileExtension)) System.out.println(unknownFileNote);
@@ -118,7 +118,7 @@ public class HdfsServer extends Thread {
 							if ((new File(fileName+tagHdfsServer+chunk+fileExtension)).exists()) {
 								try {
 									bis = new BufferedInputStream(new FileInputStream(fileName+tagHdfsServer+chunk+fileExtension), bufferSize);
-									socketOutputStream.writeObject(Commande.CMD_READ);
+									socketOutputStream.writeObject(Command.CMD_READ);
 									socketOutputStream.writeObject(fileName);//tempOutput.getFname());
 									socketOutputStream.writeObject(fileExtension);
 									socketOutputStream.writeObject(chunk);
@@ -127,7 +127,7 @@ public class HdfsServer extends Thread {
 									}
 									bis.close();
 									System.out.println(">>> Chunk n°" + chunk + " from file " + fileName + fileExtension
-											+ "sent to client " + Project.NAMENODEHOST);
+											+ "sent to client " + Project.NAMENODE);
 								} catch (Exception e) {
 									e.printStackTrace();
 								}
