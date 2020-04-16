@@ -1,8 +1,8 @@
 #!/bin/bash
 display_usage() {  
-	echo -e "usage : /config/ssh.sh <serversloginID>" 
+	echo -e "usage : ./hidopp-clear.sh <serversloginID> [optional:dataPathOnServers]" 
 	}
-
+ 
 # check whether user had supplied -h or --help, if yes display usage 
 if [[ ( $# == "--help") ||  $# == "-h" ]] 
 then 
@@ -17,14 +17,13 @@ then
 	exit 1
 fi
 
+if [ $# -le 1 ] 
+then 
+	DATA_FOLDER="/work/hidoop-fgvb"
+else
+	DATA_FOLDER=$2
+fi 
+
 id=$1
-
-#generate
-ssh-keygen -t rsa
-
-input=$PWD/config/servers
-while IFS= read -r line
-do
-	#copy
-	ssh-copy-id $id@$line
-done < "$input"
+config/kill.sh $id
+config/clean.sh $id $DATA_FOLDER
