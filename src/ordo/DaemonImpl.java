@@ -1,65 +1,77 @@
 package ordo;
 
-import map.Mapper;
-import formats.Format;
-import java.rmi.*;
-import java.rmi.server.UnicastRemoteObject ;
-import java.rmi.registry.* ;
-import java.util.*;
-import java.util.regex.Pattern;
 import java.net.InetAddress;
-import java.lang.*;
-import config.*;
+import java.rmi.Naming;
+import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.server.UnicastRemoteObject ;
+
+import config.Project;
+import formats.Format;
+import map.Mapper;
 
 
 public class DaemonImpl extends UnicastRemoteObject implements Daemon {
+	private static final long serialVersionUID = 1L;
+	private static String messageHeader = ">>> [DAEMON] ";
+	private static String errorHeader = ">>> [ERROR] ";
 
-    private static final long serialVersionUID = 1L;
+	private String serverAddress;
 
-    public DaemonImpl() throws RemoteException {
-    }
-    
-    public void runMap (Mapper m, Format reader, Format writer,Callback cb) throws RemoteException {
-	// On créé un thread pour le map
-	MapRunner mapRunner = new MapRunner(m, reader, writer, cb);
-    	mapRunner.start();       
-      
-    }
-    public static void main(String[] args) {
-        int num;
-        InetAddress adresse;
-        try {
-            // définition du port et du numéro du démon
-            num = Integer.parseInt(args[0]);
-        } catch (Exception ex) {
-            System.out.println(" Usage : java ordo/DaemonImpl <numero du démon>"); 
-            return;
-        }
-        
-        try {
-        	// Création du registre RMI
-            System.out.println("Création du RMI ...");
-            Registry registry = LocateRegistry.createRegistry(Project.PORT_DAEMON);
-            System.out.println("RMI créé !");
-        } catch (Exception e) {
-            System.out.println("Le RMI existe déjà !");
-        }
-        
-        try {
-            // Enregistrement du démon dans le registre
-	    adresse = InetAddress.getLocalHost();
-	    	System.out.println(InetAddress.getLocalHost().getHostAddress());
-	    	System.out.println(InetAddress.getByName("ohm.enseeiht.fr").getHostAddress());
-	    	System.out.println("Is reachable : "+InetAddress.getByName("ohm.enseeiht.fr").isReachable(1000)); // Fonctionne quand le VPN est ON
-	    	// Naming.rebind("//"+InetAddress.getLocalHost().getHostAddress()+":"+Project.PORT_DAEMON+"/DaemonImpl"+num,demon);
-	    	// + ITERER SUR LES PORTS POSSIBLES
-            System.out.println("Enregistrement du démon dans le registre");
-            DaemonImpl demon = new DaemonImpl();
-            Naming.rebind("//"+adresse.getHostName().split("\\.",2)[0]+":"+Project.PORT_DAEMON+"/DaemonImpl"+num,demon);
-            System.out.println("//"+adresse.getHostName().split("\\.",2)[0]+":"+Project.PORT_DAEMON+"/DaemonImpl"+num+" bound in registry");
-        } catch (Exception e) {
-            System.out.println("Le port sur lequel vous souhaitez vous connecter est occupé !");
-        }
-    }
+	public DaemonImpl(String serverAddress) throws RemoteException {
+		this.serverAddress = serverAddress;
+	}
 
+	public void runMap (Mapper m, Format reader, Format writer,Callback cb) throws RemoteException {
+		// On créé un thread pour le map
+		MapRunner mapRunner = new MapRunner(m, reader, writer, cb);
+		mapRunner.start();       
+
+	}
+
+	/**
+	 * Getter for serverAddress.
+	 * @return
+	 */
+	public String getServerAddress() {
+		return this.serverAddress;
+	}
+	
+	/**
+	 * Prints main usage on output stream.
+	 */
+	private static void printUsage() {
+		System.out.println(errorHeader + "Incorrect parameters\nUsage :"
+				+ "\njava DaemonImpl <server>\n With server = address of the server"
+				+ " the DaemonImpl is executed on");
+	}
+
+	/**
+	 * Main.
+	 * Initializes a DaemonImpl instance and bounds it to the RMI registry
+	 * @param args
+	 */
+	public static void main(String[] args) {
+		int num;
+		InetAddress adresse;
+		if (args.length > 0) {
+			try {
+				//RMI registry creation
+				LocateRegistry.createRegistry(Project.PORT_DAEMON);
+				System.out.println(messageHeader+"RMI registry created");
+			} catch (Exception e) {
+				System.out.println(messageHeader+"RMI registry exists already");
+			}
+
+			try {
+				//Bind the daemon to the RMI register
+				adresse = InetAddress.getLocalHost();
+				DaemonImpl demon = new DaemonImpl(args[0]);
+				Naming.rebind("//"+demon.getServerAddress()+":"+Project.PORT_DAEMON+"/DaemonImpl",demon);
+				System.out.println(messageHeader+"Daemon bound in registry");
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		} else printUsage();
+	} 
 }

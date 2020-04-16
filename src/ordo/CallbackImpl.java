@@ -1,9 +1,7 @@
 package ordo;
 
-import java.rmi.*;
+import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject ;
-import java.util.*;
-import java.lang.*;
 
 public class CallbackImpl extends UnicastRemoteObject implements Callback {
 	

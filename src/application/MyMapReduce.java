@@ -42,10 +42,10 @@ public class MyMapReduce implements MapReduce {
 	
 	public static void main(String args[]) {
 		Job j = new Job(Format.Type.LINE,args[0]);
-        long t1 = System.currentTimeMillis();
+        long time = System.currentTimeMillis();
 		j.startJob(new MyMapReduce());
-		long t2 = System.currentTimeMillis();
-        System.out.println("time in ms ="+(t2-t1));
+		time = System.currentTimeMillis() - time;
+        System.out.println("time in ms ="+(time));
         System.exit(0);
 		}
 }
