@@ -1,52 +1,57 @@
 package config;
 
-import java.net.InetAddress;
-
+/**
+ * Java parameters for the project.
+ */
 public interface Project {
-	
-	public static int PORT[] = {4001, 4002, 4003};
-	
+
+	/**
+	 * Storage folder on servers.
+	 * Must be the same as argument given to runner bash scripts.
+	 */
+	public String DATA_FOLDER = "/work/hidoop-fgvb/";
+
+	/**
+	 * Ports.
+	 */
 	public static int PORT_DAEMON = 4321;
-	
+
 	public static int PORT_NAMENODE = 4023;
-	
+
 	public static int PORT_DATANODE = 4027;
 
 	public static int PORT_HDFSSERVEUR = 4698;
 
 	/**
-	 * NameNode Adress
+	 * NameNode server Address.
+	 * Doesn't need to be configured here for HDFS application.
+	 * Servers' addresses have to be written in file hidoop/config/servers,
+	 * NameNode server first.
 	 */
-	public static String NAMENODE = "172.22.233.89";
-	
+	public static String NAMENODE = "ohm.enseeiht.fr";
+
 	/**
-	 * DataNodes Adresses
+	 * DataNodes servers Addresses.
+	 * Doesn't need to be configured here for HDFS application.
+	 * Servers' addresses have to be written in file hidoop/config/servers,
+	 * NameNode server first.
 	 */
-	/*public static String DATANODES[] = {
+	public static String DATANODES[] = {
 			"truite.enseeiht.fr", 
 			"carpe.enseeiht.fr", 
 			"omble.enseeiht.fr", 
 			"tanche.enseeiht.fr"
-			};
-	*/
-	public static String DATANODES[] = {"172.22.233.89"};
-	
-	public static int NUMBER_OF_DATANODE = DATANODES.length;
-	
+	};
+
+
 	public final int megaOctet = 1000000;
-	
+
 	public final int mebiOctet = 1024*1024;
-	
-	//public static int CHUNK_SIZE = 1000*megaOctet;
-	public static int CHUNK_SIZE = 1*mebiOctet;
-	
-	public enum Command{CMD_READ, CMD_WRITE, CMD_DELETE}
-	
-	public String DATANODE_FILES_PATH = "data/filesample/";//"./work/fgvb";
-	
+
 	/**
-	 * NOTE
-	 * PC ILA : InetAddress.getLocalHost().getHostName() -> DESKTOP-G1FRCJ7
-	 * PC N7  : InetAddress.getLocalHost().getHostName() -> name.enseeiht.fr
+	 * Size of chunks.
 	 */
+	public static int CHUNK_SIZE = 64*mebiOctet;
+
+	public enum Command{CMD_READ, CMD_WRITE, CMD_DELETE}
 }

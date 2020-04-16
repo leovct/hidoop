@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ */
 public class FileData implements Serializable {
 	private static final long serialVersionUID = 1L;
 	
@@ -16,7 +18,7 @@ public class FileData implements Serializable {
 	private int fileSize, chunkSize, replicationFactor;
 	
 	/**
-	 * Chunk handles fo the file.
+	 * Chunk handles of the file.
 	 * Keys (Integer) : ID of the chunks
 	 * ArrayList<String> : Servers where copies are stored
 	 */
@@ -43,7 +45,7 @@ public class FileData implements Serializable {
 	 * @param server
 	 */
 	public void addChunkLocation(int chunkId, String server) {
-		if (this.chunkHandles.contains(chunkId)) {
+		if (this.chunkHandles.containsKey(chunkId)) {
 			this.chunkHandles.get(chunkId).add(server);
 		} else {
 			ArrayList<String> value = new ArrayList<String>();
@@ -53,14 +55,14 @@ public class FileData implements Serializable {
 	}
 	
 	/**
-	 * Indicates if all chunk handles are avalaible for this file.
+	 * Indicates if all chunk handles are available for this file.
 	 * 
-	 * @return boolean, true if all chunk hundles are known
+	 * @return boolean, true if all chunk handles are known
 	 */
 	public boolean fileComplete() {
 		if (this.fileSize == -1) return false;
-		for (int chunkHundle = 0 ; chunkHundle < this.fileSize ; chunkHundle++) {
-			if (!this.containsChunkHandle(chunkHundle)) return false;
+		for (int chunkHandle = 0 ; chunkHandle < this.fileSize ; chunkHandle++) {
+			if (!this.containsChunkHandle(chunkHandle)) return false;
 		}
 		return true;
 	}
@@ -72,7 +74,7 @@ public class FileData implements Serializable {
 	 * @param chunkId ID of the chunk
 	 * @return
 	 */
-	public ArrayList<String> getChunkHundle(int chunkId) {
+	public ArrayList<String> getChunkHandle(int chunkId) {
 		return this.chunkHandles.get(chunkId);
 	}
 

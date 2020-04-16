@@ -2,20 +2,24 @@ package hdfs;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
+
+import config.Project.Command;
 	
 /**
- * Implémentation du DataNode d'un serveur
- * Communication avec le NameNode par sockets, communication
- * avec les démons locaux via RMI
+ * Server NameNode interface
  *
  */
 public interface DataNode extends Remote {
+	
 	/**
-	 * Notifier le NameNode de l'ajout d'un chunk au serveur
+	 * Initiate opening of a TCP connection with the NameNode 
+	 * to write a chunk on the server.
+	 * @param command 
+	 * @param fileName 
+	 * @param fileExtension 
+	 * @param chunkNumber 
 	 * 
-	 * @param fileName le nom du fichier d'où est issu le chunk
-	 * @param chunkName le nom du chunk sur le serveur
-	 * @return un booleen, true en cas de réussite
+	 * @return port number to send data on
 	 */
-	public boolean notifyNameNode(String fileName, String chunkName) throws RemoteException;
+	public int processChunk(Command command, String fileName, String fileExtension, int chunkNumber) throws RemoteException;
 }
