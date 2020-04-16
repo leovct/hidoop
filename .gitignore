@@ -13,3 +13,6 @@
 .project*
 .classpath*
 *namenode-data
+doc
+*.pdf
+*.docx
