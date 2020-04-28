@@ -32,11 +32,11 @@ do
 	if [ "$namenode" = true ]
 	then
 		#Run NameNode
-		mate-terminal --window -t "NameNode $line" -e "ssh $id@$line java -classpath $DATA_FOLDER/bin hdfs.NameNodeImpl"
+		mate-terminal --window -t "NameNode $line" -e "ssh $id@$line java -classpath $DATA_FOLDER hdfs.NameNodeImpl"
 		namenode=false
 	else
 		#Run DataNode
- 		mate-terminal --tab -t "DataNode $line" -e "ssh $id@$line java -classpath $DATA_FOLDER/bin hdfs.DataNodeImpl $line"
+ 		mate-terminal --tab -t "DataNode $line" -e "ssh $id@$line java -classpath $DATA_FOLDER hdfs.DataNodeImpl $line"
 	fi
 done < "$input"
 
@@ -46,11 +46,11 @@ do
 if [ $index = 1 ]
 then
 		#Run Daemon (new window)
-		mate-terminal --window -t "Daemon $line" -e "ssh $id@$line java -classpath $DATA_FOLDER/bin ordo.DaemonImpl $line"
+		mate-terminal --window -t "Daemon $line" -e "ssh $id@$line java -classpath $DATA_FOLDER ordo.DaemonImpl $line"
 elif [ $index -ge 2 ]
 then
 		#Run Daemon (new tab)
-		mate-terminal --tab -t "Daemon $line" -e "ssh $id@$line java -classpath $DATA_FOLDER/bin ordo.DaemonImpl $line"
+		mate-terminal --tab -t "Daemon $line" -e "ssh $id@$line java -classpath $DATA_FOLDER ordo.DaemonImpl $line"
 fi
 	index=$(($index+1))
 done < "$input"
