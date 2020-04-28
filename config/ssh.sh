@@ -19,12 +19,10 @@ fi
 
 id=$1
 
-#generate
-ssh-keygen -t rsa
-
 input=$PWD/config/servers
 while IFS= read -r line
 do
-	#copy
-	ssh-copy-id $id@$line
+	#add computer @line to the fingerprint
+	echo ">>> add host" $line
+	ssh-keyscan -H $line >> ~/.ssh/known_hosts
 done < "$input"
