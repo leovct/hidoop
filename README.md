@@ -11,6 +11,11 @@ Ce projet propose une première expérience sur le thème des applications concu
 * Servers' addresses must be written in _config/servers_ file, line by line. First address of the list will be NameNode's server.  
 * Servers' data storage folder can be set in src/config/Project.java file (variable DATA_FOLDER). It also needs to be specified when calling bash scripts. Default is _/work/hidoop-fgvb_.
 
+### ./config/ssh.sh \<id\>
+    Note: This is important to execute this script when you add new host servers in _config/servers_.
+    Add the ECDSA key fingerprint of the host servers.
+
+
 Use the provided hidoop-\*.sh scripts to initialise, run and clean environment.  
 **Shell commands must be executed from _Hidoop/_ folder.**  
 For each script, user's ID for SSH connection to servers must be provided.
