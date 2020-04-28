@@ -12,9 +12,9 @@ public interface JobManager extends Remote {
     /**
      * Add a job request to the list of jobs
      * 
-     * @param MapReduce mapperReducer
-     * @param Format.Type formatType
-     * @param String filename
+     * @param mapperReducer
+     * @param formatType
+     * @param filename
      * @return int representing the id given to the job
      * @throws RemoteException
      */
@@ -23,22 +23,15 @@ public interface JobManager extends Remote {
     /**
      * Start the job corresponding to the id
      * 
-     * @param int id
+     * @param id
      * @throws RemoteException
      */
     public void startJob(int id) throws RemoteException;
 
     /**
-     * Print the list of jobs
-     * 
-     * @throws RemoteException
-     */
-    public void printJobs() throws RemoteException;
-
-    /**
      * Delete a job 
      * 
-     * @param int id
+     * @param id
      * @throws RemoteException
      */
     public void deleteJob(int id) throws RemoteException;
