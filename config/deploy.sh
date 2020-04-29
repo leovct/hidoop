@@ -1,7 +1,7 @@
 #!/bin/bash
 display_usage() {  
 	echo -e "usage : /config/deploy.sh <serversloginID> [dataPathOnServers]" 
-	}
+}
 
 # check whether user had supplied -h or --help, if yes display usage 
 if [[ ( $# == "--help") ||  $# == "-h" ]] 
@@ -28,8 +28,15 @@ id=$1
 rm */*/*.class
 javac -d bin */*/*.java
 input=config/servers
+i=1
+nbrDeploy=$(< config/servers wc -l)
 while IFS= read -r line
 do
-	#copy compiled .class files on server
+	# copy compiled .class files on server
+	# use java 1.8 !!!
+	# sudo update-alternatives --config javac 
+	# sudo update-alternatives --config java
+	echo -e "\n\033[1;32m[$i/$nbrDeploy]\033[0m\033[1m deploying on \e[4m$line\033[0m"
   	scp -r bin $id@$line:$DATA_FOLDER
+	i=$((i+1))
 done < "$input"
