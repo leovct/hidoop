@@ -34,15 +34,14 @@ do
 	then
 		#Run NameNode
 	        #mate-terminal --window -t "NameNode $line" -e "ssh $id@$line java -classpath $DATA_FOLDER hdfs.NameNodeImpl"
-		cmd+="mate-terminal --window -t \"NameNode $line\" -e \"bash -c \"ssh $id@$line 'java -cp $DATA_FOLDER hdfs.NameNodeImpl'; bash\"\""
+		cmd+="mate-terminal --hide-menubar --window -t \"Namenode $line\" -e \"ssh $id@$line 'java -cp $DATA_FOLDER hdfs.NameNodeImpl'\""
 		namenode=false
 	else
 		#Run DataNode
  	        #mate-terminal --tab -t "DataNode $line" -e "ssh $id@$line java -classpath $DATA_FOLDER hdfs.DataNodeImpl $line"
-		cmd+=" --tab -t \"DataNode $line\" -e \"bash -c \"ssh $id@$line 'java -cp $DATA_FOLDER hdfs.DataNodeImpl $line'; bash\"\""
+		cmd+=" --tab -t \"DataNode $line\" -e \"ssh $id@$line 'java -cp $DATA_FOLDER hdfs.DataNodeImpl $line'\""
 	fi
 done < "$input"
-eval $cmd
 
 index=0
 while IFS= read -r line
@@ -51,12 +50,13 @@ if [ $index = 1 ]
 then
 		#Run Daemon (new window)
 	        #mate-terminal --window -t "Daemon $line" -e "ssh $id@$line java -classpath $DATA_FOLDER ordo.DaemonImpl $line"
-		mate-terminal --window -t "Daemon $line" -e "bash -c \"ssh $id@$line 'java -cp $DATA_FOLDER ordo.DaemonImpl $line'; bash\""
+		cmd+=" --window --hide-menubar -t \"Daemon $line\" -e \"ssh $id@$line 'java -cp $DATA_FOLDER ordo.DaemonImpl $line'\""
 elif [ $index -ge 2 ]
 then
 		#Run Daemon (new tab)
 	        #mate-terminal --tab -t "Daemon $line" -e "ssh $id@$line java -classpath $DATA_FOLDER ordo.DaemonImpl $line"
-		mate-terminal --tab -t "Daemon $line" -e "bash -c \"ssh $id@$line 'java -cp $DATA_FOLDER ordo.DaemonImpl $line'; bash\""
+		cmd+=" --tab -t \"Daemon $line\" -e \"ssh $id@$line 'java -cp $DATA_FOLDER ordo.DaemonImpl $line'\""
 fi
 	index=$(($index+1))
 done < "$input"
+eval $cmd
