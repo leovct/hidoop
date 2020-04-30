@@ -36,7 +36,7 @@ do
 	# use java 1.8 !!!
 	# sudo update-alternatives --config javac 
 	# sudo update-alternatives --config java
-	echo -e "\n\033[1;32m[$i/$nbrDeploy]\033[0m\033[1m deploying on \e[4m$line\033[0m"
+	echo -e "\033[1;32m[$i/$nbrDeploy]\033[0m\033[1m deploying on \e[4m$line\033[0m"
   	scp -r bin $id@$line:$DATA_FOLDER
 	i=$((i+1))
 done < "$input"

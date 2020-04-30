@@ -1,7 +1,7 @@
 #!/bin/bash
-display_usage() {  
-	echo -e "usage : ./hidoop-run.sh <serversloginID> [optional:dataPathOnServers]" 
-	}
+display_usage() {
+	echo -e "\033[1musage: ./hidoop-run.sh \033[1;31m<serversloginID>\033[0m [optional:dataPathOnServers]" 
+}
 
 # check whether user had supplied -h or --help, if yes display usage 
 if [[ ( $# == "--help") ||  $# == "-h" ]] 

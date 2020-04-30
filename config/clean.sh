@@ -33,7 +33,7 @@ do
 	#Delete all files on server
 	#Directory to delete is the one specified in 
 	#src/config/Project.java, variable DATA_FOLDER
-	echo -e "\n\033[1;31m[$i/$nbrDeploy]\033[0m\033[1m deleting files on \e[4m$line\033[0m"
+	echo -e "\033[1;31m[$i/$nbrDeploy]\033[0m\033[1m deleting files on \e[4m$line\033[0m"
   	ssh -n $id@$line rm -r $DATA_FOLDER
 	i=$((i+1))
 done < "$input"
