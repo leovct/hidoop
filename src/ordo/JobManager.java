@@ -18,7 +18,7 @@ public interface JobManager extends Remote {
      * @return int representing the id given to the job
      * @throws RemoteException
      */
-    public int addJob(MapReduce mapperReducer, Format.Type formatType, String filename) throws RemoteException;
+    public long addJob(MapReduce mapperReducer, Format.Type formatType, String filename) throws RemoteException;
 
     /**
      * Start the job corresponding to the id
@@ -26,7 +26,7 @@ public interface JobManager extends Remote {
      * @param id
      * @throws RemoteException
      */
-    public void startJob(int id) throws RemoteException;
+    public void startJob(long id) throws RemoteException;
 
     /**
      * Delete a job 
@@ -34,7 +34,24 @@ public interface JobManager extends Remote {
      * @param id
      * @throws RemoteException
      */
-    public void deleteJob(int id) throws RemoteException;
+    public void deleteJob(long id) throws RemoteException;
+
+    /**
+     * Notify that a map is done on a deamon
+     * 
+     * @param chunk_id
+     * @throws RemoteException
+     */
+    public void notifyMapDone(long jobId, int chunk_id) throws RemoteException;
+
+    /**
+     * Get the number of maps done for a job
+     * 
+     * @param job_id
+     * @throws RemoteException
+     * @return number of maps done for a job
+     */
+    public int nbMapDone(long jobId) throws RemoteException;
 
     /**
 	 * Notify the NameNode of the availability of a Daemon on a given server.

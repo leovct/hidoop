@@ -35,10 +35,10 @@ public class JobData implements Serializable {
 	 * @param fileType
 	 * @param jobState
 	 */
-	public JobData(String fileName, Format.Type fileType, State jobState, MapReduce mapperReducer) {
+	public JobData(String fileName, Format.Type fileType, MapReduce mapperReducer) {
 		this.fileName = fileName;
 		this.fileType = fileType;
-        this.jobState = jobState;
+        this.jobState = State.NotStarted;
         this.mapperReducer = mapperReducer;
         this.nbMapsDone = 0;
 		this.mapState = new ConcurrentHashMap<Integer,Boolean>();

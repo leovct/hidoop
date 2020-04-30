@@ -15,6 +15,8 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.omg.PortableServer.CurrentHelper;
+
 import config.Project;
 import formats.Format.Type;
 import map.MapReduce;
@@ -36,7 +38,7 @@ public class JobManagerImpl extends UnicastRemoteObject implements JobManager {
 	 * #id : identifier of the job
 	 * #value : JobData object storing details about the job
 	 */
-	private ConcurrentHashMap<Integer, JobData> metadata;
+	private ConcurrentHashMap<Long, JobData> metadata;
 
 	/**
 	 * Reachable Daemons (Daemons known alive).
@@ -71,7 +73,7 @@ public class JobManagerImpl extends UnicastRemoteObject implements JobManager {
 	}
 
     protected JobManagerImpl() throws RemoteException {
-        if (!this.recoverData()) this.metadata = new ConcurrentHashMap<Integer, JobData>();
+        if (!this.recoverData()) this.metadata = new ConcurrentHashMap<Long, JobData>();
 		this.avalaibleDaemons = new ArrayList<String>();
 		this.dataWriter = new DataWriter();
 		this.printMetadata();
@@ -80,26 +82,72 @@ public class JobManagerImpl extends UnicastRemoteObject implements JobManager {
     private static final long serialVersionUID = 1L;
 
     @Override
-    public int addJob(MapReduce mapperReducer, Type formatType, String filename) throws RemoteException {
-        // TODO Auto-generated method stub
-        return 0;
+    public long addJob(MapReduce mapperReducer, Type formatType, String filename) throws RemoteException {
+		JobData jobData = new JobData(filename, formatType, mapperReducer);
+		long id = System.currentTimeMillis();
+		while (this.metadata.containsKey(id)) {
+			id = System.currentTimeMillis();
+		}
+		this.metadata.put(id, jobData);
+		(new Thread(this.dataWriter)).start(); //Run data writing in backup file
+		this.printMetadata();
+		return id;		
+
     }
 
     @Override
-    public void startJob(int id) throws RemoteException {
-        // TODO Auto-generated method stub
-
+    public void startJob(long jobId) throws RemoteException {
+		if (!this.metadata.containsKey(jobId)) {
+			System.err.println(errorHeader + "Job " + jobId
+					+ " unknown to JobManager");
+		} else {
+			JobData jobData = this.metadata.get(jobId);
+			jobData.setJobState(State.Running);
+			this.metadata.put(jobId, jobData);
+			(new Thread(this.dataWriter)).start(); //Run data writing in backup file
+			this.printMetadata();
+		}        
     }
 
     @Override
-    public void deleteJob(int id) throws RemoteException {
-        // TODO Auto-generated method stub
+    public void deleteJob(long jobId) throws RemoteException {
+        if (!this.metadata.containsKey(jobId)) {
+			System.err.println(errorHeader + "Job " + jobId
+					+ " unknown to JobManager");
+		} else {
+			this.metadata.remove(jobId);
+			(new Thread(this.dataWriter)).start(); //Run data writing in backup file
+			this.printMetadata();
+		} 
+	}
+	
+	@Override
+	public void notifyMapDone(long jobId, int chunkId) throws RemoteException {
+		if (!this.metadata.containsKey(jobId)) {
+			System.err.println(errorHeader + "Job " + jobId
+					+ " unknown to JobManager");
+		} else {
+			JobData jobData = this.metadata.get(jobId);
+			ConcurrentHashMap<Integer,Boolean> mapState = jobData.getMapState();
+			mapState.put(chunkId, true);
+			jobData.setMapState(mapState);
+			this.metadata.put(jobId, jobData);
+			//(new Thread(this.dataWriter)).start(); //Run data writing in backup file
+			this.printMetadata();
+		}
+	}
 
-    }
+	@Override
+	public int nbMapDone(long jobId) throws RemoteException{
+			JobData jobData = this.metadata.get(jobId);
+			return jobData.getNbMapsDone();
+	}
 
     @Override
     public void notifyDaemonAvailability(String serverAddress) throws RemoteException {
-        if (!this.avalaibleDaemons.contains(serverAddress)) this.avalaibleDaemons.add(serverAddress);
+        if (!this.avalaibleDaemons.contains(serverAddress)) {
+			this.avalaibleDaemons.add(serverAddress);
+		}
 		System.out.println(messageHeader + "Daemon running on " + serverAddress + " connected");
 
     }
@@ -122,7 +170,7 @@ public class JobManagerImpl extends UnicastRemoteObject implements JobManager {
 				ObjectInputStream inputStream = new ObjectInputStream(new FileInputStream(backupFile));
 				Object readObject = inputStream.readObject();
 				if (readObject instanceof ConcurrentHashMap<?,?>) {
-					this.metadata = (ConcurrentHashMap<Integer, JobData>) readObject;
+					this.metadata = (ConcurrentHashMap<Long, JobData>) readObject;
 					inputStream.close();
 					return true;
 				} else {
@@ -144,7 +192,7 @@ public class JobManagerImpl extends UnicastRemoteObject implements JobManager {
 	private void printMetadata() {
 		System.out.println(messageHeader + "PRINTING METADATA : ");
 		if (this.metadata.isEmpty()) System.out.println(metadataPrinting + "No metadata");
-		for (int id : this.metadata.keySet()) {
+		for (long id : this.metadata.keySet()) {
 			System.out.println(metadataPrinting + "$" + id);
 			System.out.println(metadataPrinting + "file : "+this.metadata.get(id).getFileName()
 					+ ", file type : " + this.metadata.get(id).getFileType()
@@ -185,8 +233,5 @@ public class JobManagerImpl extends UnicastRemoteObject implements JobManager {
 			e.printStackTrace() ;
 		}
 	}
-
-
-
 }
 
