@@ -44,7 +44,7 @@ do
 		#Run DataNode
  	        #mate-terminal --tab -t "DataNode $line" -e "ssh $id@$line java -classpath $DATA_FOLDER hdfs.DataNodeImpl $line"
 		echo -e "\033[1;32m[$i/$nbrStart]\033[0m\033[1m starting DataNode on \e[4m$line\033[0m"
-		cmd+=" --tab -t \"DataNode $line\" -e \"ssh $id@$line 'java -cp $DATA_FOLDER hdfs.DataNodeImpl $line'\""
+		cmd+=" --tab -t \"DataNode $line\" -e \"ssh $id@$line 'sleep 5; java -cp $DATA_FOLDER hdfs.DataNodeImpl $line'\""
 	fi
 	i=$((i+1))
 done < "$input"
