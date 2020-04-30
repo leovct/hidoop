@@ -24,6 +24,7 @@ else
 	DATA_FOLDER=$2
 fi
 
+time=5 #time DataNode and Daemons wait before starting (wait for the NameNode to start)
 id=$1
 namenode=true
 input=config/servers
@@ -44,7 +45,7 @@ do
 		#Run DataNode
  	        #mate-terminal --tab -t "DataNode $line" -e "ssh $id@$line java -classpath $DATA_FOLDER hdfs.DataNodeImpl $line"
 		echo -e "\033[1;32m[$i/$nbrStart]\033[0m\033[1m starting DataNode on \e[4m$line\033[0m"
-		cmd+=" --tab -t \"DataNode $line\" -e \"ssh $id@$line 'sleep 5; java -cp $DATA_FOLDER hdfs.DataNodeImpl $line'\""
+		cmd+=" --tab -t \"DataNode $line\" -e \"ssh $id@$line 'sleep $time; java -cp $DATA_FOLDER hdfs.DataNodeImpl $line'\""
 	fi
 	i=$((i+1))
 done < "$input"
@@ -56,12 +57,12 @@ do
 	then
 		#Run Daemon (new window)
 	        #mate-terminal --window -t "Daemon $line" -e "ssh $id@$line java -classpath $DATA_FOLDER ordo.DaemonImpl $line"
-		cmd+=" --window --hide-menubar -t \"Daemon $line\" -e \"ssh $id@$line 'java -cp $DATA_FOLDER ordo.DaemonImpl $line'\""
+		cmd+=" --window --hide-menubar -t \"Daemon $line\" -e \"ssh $id@$line 'sleep $time; java -cp $DATA_FOLDER ordo.DaemonImpl $line'\""
 	elif [ $index -ge 2 ]
 	then
 		#Run Daemon (new tab)
 	        #mate-terminal --tab -t "Daemon $line" -e "ssh $id@$line java -classpath $DATA_FOLDER ordo.DaemonImpl $line"
-		cmd+=" --tab -t \"Daemon $line\" -e \"ssh $id@$line 'java -cp $DATA_FOLDER ordo.DaemonImpl $line'\""
+		cmd+=" --tab -t \"Daemon $line\" -e \"ssh $id@$line 'sleep $time; java -cp $DATA_FOLDER ordo.DaemonImpl $line'\""
 	fi	
 	index=$(($index+1))
 	echo -e "\033[1;32m[$i/$nbrStart]\033[0m starting\033[1m Daemon on \e[4m$line\033[0m"

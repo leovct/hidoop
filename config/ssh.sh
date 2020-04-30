@@ -1,7 +1,7 @@
 #!/bin/bash
-display_usage() {  
-	echo -e "usage : /config/ssh.sh <serversloginID>" 
-}
+display_usage() { 
+	echo -e "\033[1musage: ./config/ssh.sh \033[1;31m<serversloginID>\033[0m"
+} 
 
 # check whether user had supplied -h or --help, if yes display usage 
 if [[ ( $# == "--help") ||  $# == "-h" ]] 
