@@ -35,7 +35,7 @@ public interface NameNode extends Remote {
 	 * @return ArrayList<String> containing the addresses of servers containing the chunks
 	 * (for each chunk, only one of the replicas' locations is given)
 	 */
-	public ArrayList<String> readFileRequest(String fileName) throws RemoteException;
+	public ArrayList<ArrayList<String>> readFileRequest(String fileName) throws RemoteException;
 	
 	/**
 	 * Send a request to delete a file on HDFS.

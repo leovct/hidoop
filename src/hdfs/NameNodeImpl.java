@@ -48,7 +48,7 @@ public class NameNodeImpl extends UnicastRemoteObject implements NameNode {
 	 * Server addresses.
 	 */
 	private ArrayList<String> avalaibleDaemons;
-	
+
 	/**
 	 * Replication factor of the NameNode.
 	 */
@@ -129,7 +129,7 @@ public class NameNodeImpl extends UnicastRemoteObject implements NameNode {
 	}
 
 	@Override
-	public ArrayList<String> readFileRequest(String fileName) throws RemoteException {
+	public ArrayList<ArrayList<String>> readFileRequest(String fileName) throws RemoteException {
 		if (!this.metadata.containsKey(fileName)) {
 			System.err.println(errorHeader + "File " + fileName
 					+ " unknown to NameNode");
@@ -140,22 +140,26 @@ public class NameNodeImpl extends UnicastRemoteObject implements NameNode {
 					+ " information concerning file " + fileName);
 			return null;
 		}
-		ArrayList<String> result = new ArrayList<String>();
+		ArrayList<String> chunkHandles;
+		ArrayList<ArrayList<String>> result = new ArrayList<ArrayList<String>>();
 		boolean avalaibleReplicaServer = false;
 		FileData fileData = this.metadata.get(fileName);
 		for(int chunk = 0 ; chunk < fileData.getFileSize() ; chunk++) {
 			if (fileData.containsChunkHandle(chunk)) {
+				chunkHandles = new ArrayList<String>();
 				for (String server : fileData.getChunkHandle(chunk)) {
 					if (this.avalaibleDataNodes.contains(server)) {
-						result.add(server);
+						chunkHandles.add(server);
 						avalaibleReplicaServer = true;
-						break;
 					}
-					if (!avalaibleReplicaServer) {
-						System.err.println(errorHeader + "No server containing a replica "
-								+ "is avalaible for chunk " + chunk + " from file " + fileName);
-						return null;
-					} else avalaibleReplicaServer = false;
+				}
+				if (!avalaibleReplicaServer) {
+					System.err.println(errorHeader + "No server containing a replica "
+							+ "is avalaible for chunk " + chunk + " from file " + fileName);
+					return null;
+				} else {
+					result.add(chunkHandles);
+					avalaibleReplicaServer = false;
 				}
 			} else {
 				System.err.println(errorHeader + "Chunk handle for chunk number "
@@ -251,19 +255,19 @@ public class NameNodeImpl extends UnicastRemoteObject implements NameNode {
 		}
 		(new Thread(this.dataWriter)).start(); //Run data writing in backup file
 	}
-	
+
 	@Override
 	public synchronized void notifyNameNodeAvailability(String serverAddress) throws RemoteException {
 		if (!this.avalaibleDataNodes.contains(serverAddress)) this.avalaibleDataNodes.add(serverAddress);
 		System.out.println(messageHeader + "DataNode running on " + serverAddress + " connected");
 	}
-	
+
 	@Override
 	public void notifyDaemonAvailability(String serverAddress) throws RemoteException {
 		if (!this.avalaibleDaemons.contains(serverAddress)) this.avalaibleDaemons.add(serverAddress);
 		System.out.println(messageHeader + "Daemon running on " + serverAddress + " connected");
 	}
-	
+
 	@Override
 	public ArrayList<String> getAvalaibleDaemons() throws RemoteException {
 		if (this.avalaibleDaemons.isEmpty()) return null;
