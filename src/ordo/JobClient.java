@@ -21,7 +21,8 @@ public class JobClient {
 	private String inputFName;
 	private String outputFName;
 	private String resReduceFName;
-	private int nbMaps; 
+	private int nbMaps;
+	private long jobId;
 	private List<String> chunkList = new ArrayList<String>();
 
 
@@ -36,18 +37,33 @@ public class JobClient {
 
 	public void startJob (MapReduce mr){
 		
-		System.out.println("Lancement du job ...");
+		System.out.println("Submit job ...");
 		// Création des formats
-		Format input = new LineFormat(getInputFName());
+		//Format input = new LineFormat(getInputFName());
 		Format output = new KVFormat(getOutputFName());
 		Format resReduce = new KVFormat(getResReduceFName());
 
 		NameNode nm = null;
-		// Récupération du NameNode
+		JobManager jm = null;
+		// Récupération du NameNode et JobManager
 		try {
 			System.out.println("Récupération du stub du NameNode");
 			nm = (NameNode)Naming.lookup("//"+Project.NAMENODE+":"+Project.PORT_NAMENODE+"/NameNode");
 			System.out.println("Stub du NameNode récupéré !!");
+			System.out.println("Récupération du stub du JobManager");
+			jm = (JobManager)Naming.lookup("//"+Project.NAMENODE+":"+Project.PORT_NAMENODE+"/JobManager");
+			System.out.println("Stub du JobManager récupéré !!");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		//Initialisation côté JobManager
+		try {
+			System.out.println("Ajout du Job au JobManager...");
+			long id = jm.addJob(mr, getInputFormat(), getInputFName());
+			this.jobId = id;
+			System.out.println("Lancement du Job...");
+			jm.startJob(id);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -57,7 +73,7 @@ public class JobClient {
 		List<Daemon> demons = new ArrayList<Daemon>();
 		List<String> demonsName = new ArrayList<String>();
 		try {
-			demonsName = nm.getAvalaibleDaemons();
+			demonsName = jm.getAvalaibleDaemons();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -84,17 +100,6 @@ public class JobClient {
 		// Mise à jour du nombre de maps à effectuer
 		setNbMaps(getChunkList().size());
 
-		// Initialisation du callback
-		System.out.println("Initialisation du Callback ...");
-		Callback cb = null;
-		try {
-			cb = new CallbackImpl(getNbMaps());
-			System.out.println("CallBack initialisé !!\n");
-		} catch (RemoteException e) {
-			e.printStackTrace();
-		}
-		
-
 		// Lancement des maps sur les démons
 		System.out.println("Lancement des maps ...");
 		for(int i = 0; i < getNbMaps(); i++) {
@@ -111,7 +116,7 @@ public class JobClient {
 			Format outputTmp = new KVFormat(Project.DATA_FOLDER + chunk + "-map");
 			// On appelle runMap sur le bon démon
 			try {
-				d.runMap(mr, inputTmp, outputTmp, cb);
+				d.runMap(mr, inputTmp, outputTmp, jobId);
 			} catch (RemoteException e) {
 				e.printStackTrace();
 			}
@@ -121,7 +126,10 @@ public class JobClient {
 		// Puis on attends que tous les démons aient finis leur travail
 		System.out.println("Attente du callback des Daemons ...");
 		try {
-			cb.waitMapDone();
+			int maps = jm.nbMapDone(jobId);
+			while(maps<nbMaps) {
+				maps = jm.nbMapDone(jobId);
+			}
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		}
