@@ -208,17 +208,18 @@ public class NameNodeImpl extends UnicastRemoteObject implements NameNode {
 			this.metadata.put(fileName, fileData);
 		} else {
 			fileData = this.metadata.get(fileName);
-			if (fileData.getChunkSize() != chunkSize) {
-				if (fileData.getFileSize() != fileSize || fileData.getReplicationFactor() != replicationFactor) {
-					fileData.setFileSize(fileSize);
-					fileData.setChunkSize(chunkSize);
-					fileData.setReplicationFactor(replicationFactor);
-					fileData.getChunkHandles().clear();
-					System.err.println(errorHeader + "Data for file "
-							+ fileName + " has been overwritten by new ones");
-				} else { //Received a chunk from a known file with an unknown chunk size : the chunk is the result of a map operation 
-					fileData.setChunkSize(chunkSize);
-				}
+			if (fileData.getChunkSize() != chunkSize
+					&& fileData.getFileSize() == fileSize && fileData.getReplicationFactor() == replicationFactor) {
+				//Received a chunk from a known file with an unknown chunk size : the chunk is the result of a map operation 
+				fileData.setChunkSize(chunkSize); 
+			} else if (fileData.getChunkSize() != chunkSize || fileData.getFileSize() != fileSize 
+					|| fileData.getReplicationFactor() != replicationFactor) {
+				fileData.setFileSize(fileSize);
+				fileData.setChunkSize(chunkSize);
+				fileData.setReplicationFactor(replicationFactor);
+				fileData.getChunkHandles().clear();
+				System.err.println(errorHeader + "Data for file "
+						+ fileName + " has been overwritten by new ones");
 			}
 			fileData.addChunkLocation(chunkNumber, server);
 		}
