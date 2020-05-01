@@ -30,9 +30,9 @@ For each script, user's ID for SSH connection to servers must be provided.
 	Application must be init to run again. 
 
 _In this version, files can be written, read and deleted on HDFS by exectuting following code (from Hidoop/) once hidoop-init.sh has been executed :_  
-* java -classpath bin hdfs.HdfsClient write <line|kv> <sourcefilename>
-* java -classpath bin hdfs.HdfsClient read <sourcefilename> <destfilename>
-* java -classpath bin hdfs.HdfsClient delete <sourcefilename>
+* java -classpath bin hdfs.HdfsClient write \<line|kv\> \<sourcefilename\> \<replicationfactor\>
+* java -classpath bin hdfs.HdfsClient read \<sourcefilename\> \<destfilename\>
+* java -classpath bin hdfs.HdfsClient delete \<sourcefilename\>
 
 
 ## Fonctionnement
