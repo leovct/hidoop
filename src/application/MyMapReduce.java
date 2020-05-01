@@ -6,6 +6,7 @@ import java.util.StringTokenizer;
 
 import map.MapReduce;
 import ordo.Job;
+import ordo.JobClient;
 import formats.Format;
 import formats.FormatReader;
 import formats.FormatWriter;
@@ -41,7 +42,7 @@ public class MyMapReduce implements MapReduce {
 	}
 	
 	public static void main(String args[]) {
-		Job j = new Job(Format.Type.LINE,args[0]);
+		JobClient j = new JobClient(Format.Type.LINE,args[0]);
         long time = System.currentTimeMillis();
 		j.startJob(new MyMapReduce());
 		time = System.currentTimeMillis() - time;
