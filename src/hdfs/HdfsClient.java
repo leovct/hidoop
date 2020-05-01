@@ -219,11 +219,13 @@ public class HdfsClient {
 			if (!chunkRead) {
 				System.err.println(readFileError);
 				(new File(localFSDestFname)).delete();
+				return;
 			}
 			chunkCounter++;
+			chunkRead = false;
 		}
 		System.out.println(messageHeader + "End of chunks reception "
-				+ "for file " + fileName + ", result file writen as " + localFSDestFname);
+				+ "for file " + fileName + fileExtension + ", result file writen as " + localFSDestFname);
 	}
 
 	/**
