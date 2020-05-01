@@ -20,16 +20,22 @@ fi
 id=$1
 namenode=true
 input=$PWD/config/servers
+i=1
+nbrKill=$(< config/servers wc -l)
 while IFS= read -r line
 do
 	if [ "$namenode" = true ]
 	then
 		#Kill NameNodeImpl java programs
+		echo -e "\033[1;31m[$i/$nbrKill]\033[0m\033[1m killing NameNode & JobManager java process on \e[4m$line\033[0m"
   		ssh -n $id@$line pkill -9 -f NameNodeImpl
+		ssh -n $id@$line pkill -9 -f JobManagerImpl
   		namenode=false
   	else
 		#Kill DataNodeImpl and DaemonImpl java programs
+		echo -e "\033[1;31m[$i/$nbrKill]\033[0m\033[1m killing DataNode & Daemon java processes on \e[4m$line\033[0m"
   		ssh -n $id@$line pkill -9 -f DataNodeImpl
   		ssh -n $id@$line pkill -9 -f DaemonImpl
 	fi
+	i=$((i+1))
 done < "$input"

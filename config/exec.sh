@@ -40,17 +40,16 @@ do
 	fi
 done < "$input"
 
-index=0
+jobmanager=true
 while IFS= read -r line
 do
-if [ $index = 1 ]
-then
+	if [ "$jobmanager" = true ]
+	then
 		#Run Daemon (new window)
-		mate-terminal --window -t "Daemon $line" -e "ssh $id@$line java -classpath $DATA_FOLDER ordo.DaemonImpl $line"
-elif [ $index -ge 2 ]
-then
+		mate-terminal --window -t "JobManager $line" -e "ssh $id@$line java -classpath $DATA_FOLDER ordo.JobManagerImpl $line"
+		jobmanager=false
+	else 
 		#Run Daemon (new tab)
 		mate-terminal --tab -t "Daemon $line" -e "ssh $id@$line java -classpath $DATA_FOLDER ordo.DaemonImpl $line"
 fi
-	index=$(($index+1))
 done < "$input"
