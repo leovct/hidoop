@@ -215,6 +215,7 @@ public class HdfsClient {
 					System.err.println(errorHeader + "A problem occured while trying to retrieve chunk from " 
 							+ chunkHandles.get(chunkHandle) + ", trying to retrieve a copy from another server...");
 				}
+				chunkHandle++;
 			}
 			if (!chunkRead) {
 				System.err.println(readFileError);
