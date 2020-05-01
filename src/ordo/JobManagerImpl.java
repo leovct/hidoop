@@ -15,8 +15,6 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.omg.PortableServer.CurrentHelper;
-
 import config.Project;
 import formats.Format.Type;
 import map.MapReduce;
@@ -89,7 +87,7 @@ public class JobManagerImpl extends UnicastRemoteObject implements JobManager {
 			id = System.currentTimeMillis();
 		}
 		this.metadata.put(id, jobData);
-		(new Thread(this.dataWriter)).start(); //Run data writing in backup file
+		//(new Thread(this.dataWriter)).start(); //Run data writing in backup file
 		this.printMetadata();
 		return id;		
 
@@ -104,7 +102,7 @@ public class JobManagerImpl extends UnicastRemoteObject implements JobManager {
 			JobData jobData = this.metadata.get(jobId);
 			jobData.setJobState(State.Running);
 			this.metadata.put(jobId, jobData);
-			(new Thread(this.dataWriter)).start(); //Run data writing in backup file
+			//(new Thread(this.dataWriter)).start(); //Run data writing in backup file
 			this.printMetadata();
 		}        
     }
@@ -116,7 +114,7 @@ public class JobManagerImpl extends UnicastRemoteObject implements JobManager {
 					+ " unknown to JobManager");
 		} else {
 			this.metadata.remove(jobId);
-			(new Thread(this.dataWriter)).start(); //Run data writing in backup file
+			//(new Thread(this.dataWriter)).start(); //Run data writing in backup file
 			this.printMetadata();
 		} 
 	}
