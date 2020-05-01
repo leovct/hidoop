@@ -65,7 +65,7 @@ public class DaemonImpl extends UnicastRemoteObject implements Daemon {
 				Naming.rebind("//"+demon.getServerAddress()+":"+Project.PORT_DAEMON+"/DaemonImpl",demon);
 				System.out.println(messageHeader+"Daemon bound in registry");
 				//Notify the JobManager of its availability
-				JobManager jobManager = (JobManager) Naming.lookup("//"+Project.NAMENODE+":"+Project.PORT_NAMENODE+"/NameNode");
+				JobManager jobManager = (JobManager) Naming.lookup("//"+Project.NAMENODE+":"+Project.PORT_NAMENODE+"/JobManager");
 				jobManager.notifyDaemonAvailability(demon.getServerAddress());
 			} catch (Exception e) {
 				e.printStackTrace();

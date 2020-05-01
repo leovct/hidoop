@@ -27,8 +27,8 @@ public class JobManagerImpl extends UnicastRemoteObject implements JobManager {
 	private static String messageHeader = ">>> [JOBMANAGER] ";
 	private static String errorHeader = ">>> [ERROR] ";
 	private static String metadataPrinting = ">>> [METADATA] ";
-	private static final String noDaemonError = errorHeader
-			+ "No Daemon avalaible";
+	//private static final String noDaemonError = errorHeader
+	//		+ "No Daemon avalaible";
 	private static final String backupFile = Project.DATA_FOLDER + "jobmanager-data";
 
 	/**
@@ -47,7 +47,7 @@ public class JobManagerImpl extends UnicastRemoteObject implements JobManager {
 	/**
 	 * Data writer of the NameNode.
 	 */
-	private DataWriter dataWriter;
+	//private DataWriter dataWriter;
 
 
 	/**
@@ -73,7 +73,7 @@ public class JobManagerImpl extends UnicastRemoteObject implements JobManager {
     protected JobManagerImpl() throws RemoteException {
         if (!this.recoverData()) this.metadata = new ConcurrentHashMap<Long, JobData>();
 		this.avalaibleDaemons = new ArrayList<String>();
-		this.dataWriter = new DataWriter();
+		//this.dataWriter = new DataWriter();
 		this.printMetadata();
     }
 

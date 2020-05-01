@@ -5,7 +5,6 @@ import java.util.Map;
 import java.util.StringTokenizer;
 
 import map.MapReduce;
-import ordo.Job;
 import ordo.JobClient;
 import formats.Format;
 import formats.FormatReader;
