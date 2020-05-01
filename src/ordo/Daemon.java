@@ -7,5 +7,5 @@ import formats.Format;
 import map.Mapper;
 
 public interface Daemon extends Remote {
-	public void runMap (Mapper m, Format reader, Format writer,Callback cb) throws RemoteException;
+	public void runMap (Mapper m, Format reader, Format writer, long jobId) throws RemoteException;
 }
