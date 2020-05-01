@@ -328,7 +328,7 @@ public class HdfsClient {
 	 */
 	private static void printUsage() {
 		System.out.println(messageHeader + "Incorrect parameters\nUsage :"
-				+ "\njava HdfsClient write <line|kv> <file>"
+				+ "\njava HdfsClient write <line|kv> <file> <replicationfactor>"
 				+ "\njava HdfsClient read <file> <destfile>"
 				+ "\njava HdfsClient delete <file>");
 	}
@@ -336,14 +336,14 @@ public class HdfsClient {
 	/**
 	 * Main.
 	 * Usage :
-	 * java HdfsClient write <line|kv> <file>
+	 * java HdfsClient write <line|kv> <file> <replicationfactor>
 	 * java HdfsClient read <file> <destfile>
 	 * java HdfsClient delete <file>
 	 * 
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		if (args.length < 2 || args.length > 3) printUsage();
+		if (args.length < 2 || args.length > 4) printUsage();
 		else {
 			switch (args[0]) {
 			case "write":
@@ -351,11 +351,25 @@ public class HdfsClient {
 				else if (args[1].equals("line"))
 					if (!(new File(args[2]).exists())) {
 						System.err.println(errorHeader + "File "+args[2]+" could not be found");
-					} else HdfsWrite(Format.Type.LINE, args[2], 2);
+					} else {
+						try {
+							HdfsWrite(Format.Type.LINE, args[2], (args.length > 3) ? Integer.parseInt(args[3]) : 1);
+						} catch (NumberFormatException e) {
+							printUsage();
+							System.out.println("\n<replicationfactor> must be an integer");
+						}
+					}
 				else if (args[1].equals("kv"))
 					if (!(new File(args[2]).exists())) {
 						System.err.println(errorHeader + "File "+args[2]+" could not be found");
-					} else HdfsWrite(Format.Type.KV, args[2], 2);
+					} else {
+						try {
+							HdfsWrite(Format.Type.KV, args[2], (args.length > 3) ? Integer.parseInt(args[3]) : 1);
+						} catch (NumberFormatException e) {
+							printUsage();
+							System.out.println("<replicationfactor> must be an integer");
+						}
+					}
 				else printUsage();
 				break;
 			case "read":
