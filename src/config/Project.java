@@ -28,7 +28,7 @@ public interface Project {
 	 * Servers' addresses have to be written in file hidoop/config/servers,
 	 * NameNode server first.
 	 */
-	public static String NAMENODE = "ohm.enseeiht.fr";
+	public static String NAMENODE = "alose.enseeiht.fr";
 
 	/**
 	 * DataNodes servers Addresses.
@@ -37,10 +37,10 @@ public interface Project {
 	 * NameNode server first.
 	 */
 	public static String DATANODES[] = {
-			"truite.enseeiht.fr", 
-			"carpe.enseeiht.fr", 
-			"omble.enseeiht.fr", 
-			"tanche.enseeiht.fr"
+			"bonite.enseeiht.fr", 
+			"corb.enseeiht.fr", 
+			"daurade.enseeiht.fr", 
+			"eperlan.enseeiht.fr"
 	};
 
 

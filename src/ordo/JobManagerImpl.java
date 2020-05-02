@@ -118,18 +118,31 @@ public class JobManagerImpl extends UnicastRemoteObject implements JobManager {
 			this.printMetadata();
 		} 
 	}
-	
+
 	@Override
-	public void notifyMapDone(long jobId, int chunkId) throws RemoteException {
+	public void submitMap(long jobId, int chunkId) throws RemoteException {
+		System.out.println("-------SubmitJob---------");
 		if (!this.metadata.containsKey(jobId)) {
 			System.err.println(errorHeader + "Job " + jobId
 					+ " unknown to JobManager");
 		} else {
 			JobData jobData = this.metadata.get(jobId);
-			ConcurrentHashMap<Integer,Boolean> mapState = jobData.getMapState();
-			mapState.put(chunkId, true);
-			jobData.setMapState(mapState);
+			jobData.addMapState(chunkId);
 			this.metadata.put(jobId, jobData);
+			//(new Thread(this.dataWriter)).start(); //Run data writing in backup file
+			this.printMetadata();
+		}
+	}
+	
+	@Override
+	public void notifyMapDone(long jobId, int chunkId) throws RemoteException {
+		System.out.println("-------MapDone---------");
+		if (!this.metadata.containsKey(jobId)) {
+			System.err.println(errorHeader + "Job " + jobId
+					+ " unknown to JobManager");
+		} else {
+			JobData jobData = this.metadata.get(jobId);
+			jobData.setMapState(chunkId, true);
 			//(new Thread(this.dataWriter)).start(); //Run data writing in backup file
 			this.printMetadata();
 		}

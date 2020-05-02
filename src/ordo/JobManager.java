@@ -39,6 +39,16 @@ public interface JobManager extends Remote {
     /**
      * Notify that a map is done on a deamon
      * 
+     * @param job_id
+     * @param chunk_id
+     * @throws RemoteException
+     */
+    public void submitMap(long jobId, int chunk_id) throws RemoteException;
+
+    /**
+     * Notify that a map is done on a deamon
+     * 
+     * @param job_id
      * @param chunk_id
      * @throws RemoteException
      */

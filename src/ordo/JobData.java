@@ -33,7 +33,7 @@ public class JobData implements Serializable {
 	 * 
 	 * @param fileName 
 	 * @param fileType
-	 * @param jobState
+	 * @param mapperReducer
 	 */
 	public JobData(String fileName, Format.Type fileType, MapReduce mapperReducer) {
 		this.fileName = fileName;
@@ -47,7 +47,6 @@ public class JobData implements Serializable {
     /**
      * Add a map
      * @param chunk_id number of the chunk
-     * @param state boolean representing the state of the map
      */
     public void addMapState(int chunk_id) {
         this.mapState.put(chunk_id, false);
@@ -59,7 +58,7 @@ public class JobData implements Serializable {
      * @param state boolean representing the state of the map
      */
     public void setMapState(int chunk_id, boolean state) {
-        this.mapState.put(chunk_id, state);
+        this.mapState.replace(chunk_id, state);
         if (state == true) {
             this.nbMapsDone++;
         } else {

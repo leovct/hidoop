@@ -35,8 +35,8 @@ public class JobClient {
 		this.resReduceFName = inputFName + "-resf";
 	}
 
-	public void startJob (MapReduce mr){
-		
+	public void startJob (MapReduce mr) {
+
 		System.out.println("Submit job ...");
 		// Création des formats
 		//Format input = new LineFormat(getInputFName());
@@ -103,6 +103,11 @@ public class JobClient {
 		// Lancement des maps sur les démons
 		System.out.println("Lancement des maps ...");
 		for(int i = 0; i < getNbMaps(); i++) {
+			try {
+				jm.submitMap(jobId, i);
+			} catch (RemoteException e) {
+				e.printStackTrace();
+			}
 			// On définit le nom du chunk
 			String chunk = getInputFName().split("\\.")[0] + "-serverchunk"+ i + "." + getInputFName().split("\\.")[1];
 			// On récupère le nom de la machine qui possède le chunk
