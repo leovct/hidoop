@@ -25,8 +25,8 @@ nbrAdd=$(< config/servers wc -l)
 while IFS= read -r line
 do
 	#add computer @line to the fingerprint
-	echo -e "\033[1;32m[$i/$nbrAdd]\033[0m\033[1m adding \e[4m$line\033[0m\033[1m to .ssh/known_hosts\033[0m"
-	ssh-keyscan -H $line >> ~/.ssh/known_hosts
-	# ssh -o StrictHostKeyChecking=no ?
+	echo -e "\033[1;32m[$i/$nbrAdd]\033[0m\033[1m adding public key to \e[4m$line\033[0m\033[1m\033[0m"
+	#ssh-keyscan -H $line >> ~/.ssh/known_hosts
+	ssh-copy-id $id@$line #add the public key to all the servers in the cluster
 	i=$((i+1))
 done < "$input"
