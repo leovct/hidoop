@@ -26,6 +26,7 @@ fi
 
 id=$1
 rm */*/*.class
+[ -d "bin" ] || mkdir bin
 javac -d bin */*/*.java
 input=config/servers
 i=1

@@ -5,7 +5,7 @@ import java.rmi.server.UnicastRemoteObject ;
 
 public class CallbackImpl extends UnicastRemoteObject implements Callback {
 	
-	private static final long serialVersionUID = 2674880711467464646L;
+	private static final long serialVersionUID = 1L;
 	private int nbMapDone;  
 	private int nbMaps;
 	private final Object lock = new Object();

@@ -36,8 +36,11 @@ else
 	DATA_FOLDER=$2
 fi 
 
-chmod u+x config/*.sh
+#run scripts through command line
+chmod u+x config/*.sh hidoop-clear.sh hidoop-run.sh
+#run scripts
 id=$1
 display_logo
+config/ssh.sh $id
 config/clean.sh $id $DATA_FOLDER
 config/deploy.sh $id $DATA_FOLDER

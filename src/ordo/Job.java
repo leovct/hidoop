@@ -1,7 +1,9 @@
 package ordo;
 
+import java.net.InetAddress;
 import java.rmi.Naming;
 import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject ;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -25,60 +27,65 @@ public class Job implements JobInterface {
 	private String outputFName;
 	private String resReduceFName;
 	private int nbMaps; 
-	private HashMap<String,String> chunkList = new HashMap<String,String>();
+	private List<String> chunkList = new ArrayList<String>();
+
 
 	public Job(Format.Type inputFormat, String inputFName) {
 		this.inputFormat = inputFormat;
 		this.inputFName = inputFName;
 		this.outputFormat = Format.Type.KV;
-		this.outputFName = (inputFName.split("\\.")[0] + "-map" + "." + inputFName.split("\\.")[1]);
+		this.outputFName = inputFName + "-map";
 		this.resReduceFormat = Format.Type.KV;
-		this.resReduceFName = (inputFName.split("\\.")[0] + "-resf" + "." + inputFName.split("\\.")[1]);
+		this.resReduceFName = inputFName + "-resf";
 	}
 
 	public void startJob (MapReduce mr){
-
-		System.out.println("Lancement de startJob ...");
-
+		
+		System.out.println("Lancement du job ...");
 		// Création des formats
 		Format input = new LineFormat(getInputFName());
 		Format output = new KVFormat(getOutputFName());
 		Format resReduce = new KVFormat(getResReduceFName());
 
+		NameNode nm = null;
+		// Récupération du NameNode
+		try {
+			System.out.println("Récupération du stub du NameNode");
+			nm = (NameNode)Naming.lookup("//"+Project.NAMENODE+":"+Project.PORT_NAMENODE+"/NameNode");
+			System.out.println("Stub du NameNode récupéré !!");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
 		// Récupération de la liste des démons
 		System.out.println("Récupération de la liste des Daemons ...");
-		List<Daemon> demons = new ArrayList<>();
-		for(int i = 0; i < Project.DATANODES.length; i++) {
+		List<Daemon> demons = new ArrayList<Daemon>();
+		List<String> demonsName = new ArrayList<String>();
+		try {
+			demonsName = nm.getAvalaibleDaemons();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		for(String serverAddress : demonsName) {
 			try {
-				System.out.println("On récupère le stub de : //"+Project.DATANODES[i]+":4321/DaemonImpl"+ (i+1) );
-				demons.add((Daemon) Naming.lookup("//"+Project.DATANODES[i]+":4321/DaemonImpl"+ (i+1) ));
+				System.out.println("On récupère le stub de : //"+serverAddress+":"+Project.PORT_DAEMON+"/DaemonImpl" );
+				demons.add((Daemon)Naming.lookup("//"+serverAddress+":"+Project.PORT_DAEMON+"/DaemonImpl"));
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
-		System.out.println("Daemons récupérés !!\n");
+		System.out.println("Daemons récupérés !!");
 
-		System.out.println("Récupération du NameNode ...");
-
-		HashMap<String,String> mapList = new HashMap<String,String>();
-		NameNode nm = null;
+		//Récupération de la liste des chunks
 		try {
-			// Récupération du NameNode et de la liste des chunks
-			System.out.println("On récupère le stub de : //bilbo:"+Project.PORT_NAMENODE+"/NameNode");
-			nm = (NameNode)Naming.lookup("//"+Project.NAMENODE+":"+Project.PORT_NAMENODE+"/NameNode");
-			System.out.println("NameNode récupéré !!\n");
-			//RFiche cl = nm.Consulter(getInputFName());
-			//setChunkList(cl.getNode());
-			// Ajout temporaire dans le NameNode des fichiers résultats des maps
-			for (String nomKey : getChunkList().keySet()) {
-				mapList.put(getInputFName().split("\\.")[0]+(nomKey.split("\\.")[0]).split(getInputFName().split("\\.")[0])[1]+"-map.txt",getChunkList().get(nomKey)); 
-			}
-			//CFicheImpl l = new CFicheImpl(getInputFName().split("\\.")[0]+"-map.txt",mapList);
-			//  	nm.Ajouter(l);
+			System.out.println("Récupération de la liste des chunks ..."); 
+			ArrayList<String> chunks = nm.readFileRequest(getInputFName());
+			setChunkList(chunks);
+			System.out.println("Chunks récupérés !!\n");
 		} catch (Exception e) {
 			e.printStackTrace();
-		} 
-
+		}
+		
 		// Mise à jour du nombre de maps à effectuer
 		setNbMaps(getChunkList().size());
 
@@ -87,25 +94,26 @@ public class Job implements JobInterface {
 		Callback cb = null;
 		try {
 			cb = new CallbackImpl(getNbMaps());
+			System.out.println("CallBack initialisé !!\n");
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		}
-		System.out.println("CallBack initialisé !!\n");
+		
 
 		// Lancement des maps sur les démons
 		System.out.println("Lancement des maps ...");
 		for(int i = 0; i < getNbMaps(); i++) {
 			// On définit le nom du chunk
-			String chunk = getInputFName().split("\\.")[0] + i + "." + getInputFName().split("\\.")[1];
+			String chunk = getInputFName().split("\\.")[0] + "-serverchunk"+ i + "." + getInputFName().split("\\.")[1];
 			// On récupère le nom de la machine qui possède le chunk
-			String machine = getChunkList().get(chunk);
+			String machine = getChunkList().get(i);
 			// On récupère le numéro du démon sur lequel lancer le map
-			int numDaemon = Arrays.asList(Project.DATANODES).indexOf(machine);
+			int numDaemon = demonsName.indexOf(machine);
 			// On récupère le bon démon dans la liste des démons
 			Daemon d = demons.get(numDaemon);
 			// On change le nom des Formats pour qu'ils correspondent aux fragments
-			Format inputTmp = new LineFormat(chunk);
-			Format outputTmp = new KVFormat(chunk.split("\\.")[0] + "-map." + chunk.split("\\.")[1]);
+			Format inputTmp = new LineFormat(Project.DATA_FOLDER + chunk);
+			Format outputTmp = new KVFormat(Project.DATA_FOLDER + chunk + "-map");
 			// On appelle runMap sur le bon démon
 			try {
 				d.runMap(mr, inputTmp, outputTmp, cb);
@@ -113,7 +121,7 @@ public class Job implements JobInterface {
 				e.printStackTrace();
 			}
 		}
-		System.out.println("Maps terminés !!\n");
+		System.out.println("Lancement des maps terminé !!\n");
 
 		// Puis on attends que tous les démons aient finis leur travail
 		System.out.println("Attente du callback des Daemons ...");
@@ -122,12 +130,18 @@ public class Job implements JobInterface {
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		}
-		System.out.println("Callback reçu !!\n");
+		System.out.println("Callbacks reçus !!\n");
+
+		// Notifier le NameNode que tous les chunks ont été écrits
+		try {
+			nm.allChunkWritten(getOutputFName());
+     		} catch (Exception e) {
+			e.printStackTrace();
+		}
 
 		// On appelle hdfs.read pour récupérer tous les résultats des maps
 		try {
-			HdfsClient.HdfsRead(getInputFName().split("\\.")[0] +"-map.txt" ,getOutputFName());
-			//nm.Supprimer(getInputFName().split("\\.")[0] +"-map.txt");
+			HdfsClient.HdfsRead(getOutputFName() , getOutputFName());
 		} catch (Exception e) {
 			e.printStackTrace();
 		} 
@@ -144,6 +158,7 @@ public class Job implements JobInterface {
 		output.close();
 		resReduce.close();
 		System.out.println("Job terminé !!");
+
 	}
 
 
@@ -204,11 +219,11 @@ public class Job implements JobInterface {
 		return this.nbMaps;
 	}
 
-	public void setChunkList(HashMap<String,String> chunkList) {
+	public void setChunkList(List<String> chunkList) {
 		this.chunkList = chunkList;
 	}
 
-	public HashMap<String,String> getChunkList() {
+	public List<String> getChunkList() {
 		return this.chunkList;
 	}
 }
