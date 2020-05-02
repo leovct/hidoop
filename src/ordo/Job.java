@@ -1,12 +1,8 @@
 package ordo;
 
-import java.net.InetAddress;
 import java.rmi.Naming;
 import java.rmi.RemoteException;
-import java.rmi.server.UnicastRemoteObject ;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 
 import config.Project;
@@ -27,7 +23,7 @@ public class Job implements JobInterface {
 	private String outputFName;
 	private String resReduceFName;
 	private int nbMaps; 
-	private List<String> chunkList = new ArrayList<String>();
+	private List<ArrayList<String>> chunkList = new ArrayList<ArrayList<String>>();
 
 
 	public Job(Format.Type inputFormat, String inputFName) {
@@ -43,7 +39,7 @@ public class Job implements JobInterface {
 		
 		System.out.println("Lancement du job ...");
 		// Création des formats
-		Format input = new LineFormat(getInputFName());
+		//Format input = new LineFormat(getInputFName());
 		Format output = new KVFormat(getOutputFName());
 		Format resReduce = new KVFormat(getResReduceFName());
 
@@ -79,7 +75,7 @@ public class Job implements JobInterface {
 		//Récupération de la liste des chunks
 		try {
 			System.out.println("Récupération de la liste des chunks ..."); 
-			ArrayList<String> chunks = nm.readFileRequest(getInputFName());
+			ArrayList<ArrayList<String>> chunks = nm.readFileRequest(getInputFName());
 			setChunkList(chunks);
 			System.out.println("Chunks récupérés !!\n");
 		} catch (Exception e) {
@@ -106,7 +102,7 @@ public class Job implements JobInterface {
 			// On définit le nom du chunk
 			String chunk = getInputFName().split("\\.")[0] + "-serverchunk"+ i + "." + getInputFName().split("\\.")[1];
 			// On récupère le nom de la machine qui possède le chunk
-			String machine = getChunkList().get(i);
+			String machine = getChunkList().get(i).get(0);
 			// On récupère le numéro du démon sur lequel lancer le map
 			int numDaemon = demonsName.indexOf(machine);
 			// On récupère le bon démon dans la liste des démons
@@ -219,11 +215,11 @@ public class Job implements JobInterface {
 		return this.nbMaps;
 	}
 
-	public void setChunkList(List<String> chunkList) {
-		this.chunkList = chunkList;
+	public void setChunkList(ArrayList<ArrayList<String>> chunks) {
+		this.chunkList = chunks;
 	}
 
-	public List<String> getChunkList() {
+	public List<ArrayList<String>> getChunkList() {
 		return this.chunkList;
 	}
 }

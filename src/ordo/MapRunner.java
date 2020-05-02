@@ -16,7 +16,7 @@ public class MapRunner extends Thread {
 	Callback cb;
 	String serverAddress;
 	private static String messageHeader = ">>> [DAEMON] ";
-	private static String errorHeader = ">>> [ERROR] ";
+	//private static String errorHeader = ">>> [ERROR] ";
 
 	public MapRunner(Mapper m, Format reader, Format writer, Callback cb, String serverAddress){
 		this.m = m;

@@ -1,6 +1,5 @@
 package ordo;
 
-import java.net.InetAddress;
 import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -53,8 +52,6 @@ public class DaemonImpl extends UnicastRemoteObject implements Daemon {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		int num;
-		InetAddress adresse;
 		if (args.length > 0) {
 			try {
 				//RMI registry creation
