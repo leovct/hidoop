@@ -39,7 +39,7 @@ do
 		#Run NameNode
 	        #mate-terminal --window -t "NameNode $line" -e "ssh $id@$line java -classpath $DATA_FOLDER hdfs.NameNodeImpl"
 		echo -e "\033[1;32m[$i/$nbrStart]\033[0m\033[1m starting NameNode on \e[4m$line\033[0m"
-		cmd+="mate-terminal --hide-menubar --window -t \"Namenode $line\" -e \"ssh $id@$line 'java -cp $DATA_FOLDER hdfs.NameNodeImpl'\""
+		cmd+="mate-terminal --window --hide-menubar -t \"Namenode $line\" -e \"ssh $id@$line 'java -cp $DATA_FOLDER hdfs.NameNodeImpl'\""
 		namenode=false
 	else
 		#Run DataNode
@@ -50,22 +50,22 @@ do
 	i=$((i+1))
 done < "$input"
 
-index=0
+jobmanager=true
 while IFS= read -r line
 do
-	if [ $index = 1 ]
+	if [ "$jobmanager" = true ]
 	then
 		#Run Daemon (new window)
 	        #mate-terminal --window -t "Daemon $line" -e "ssh $id@$line java -classpath $DATA_FOLDER ordo.DaemonImpl $line"
-		cmd+=" --window --hide-menubar -t \"Daemon $line\" -e \"ssh $id@$line 'sleep $time; java -cp $DATA_FOLDER ordo.DaemonImpl $line'\""
-	elif [ $index -ge 2 ]
-	then
+		echo -e "\033[1;32m[$i/$nbrStart]\033[0m\033[1m starting JobManager on \e[4m$line\033[0m"
+		cmd+=" --window --hide-menubar -t \"JobManager $line\" -e \"ssh $id@$line 'java -cp $DATA_FOLDER ordo.JobManagerImpl'\""
+		jobmanager=false
+	else
 		#Run Daemon (new tab)
 	        #mate-terminal --tab -t "Daemon $line" -e "ssh $id@$line java -classpath $DATA_FOLDER ordo.DaemonImpl $line"
+		echo -e "\033[1;32m[$i/$nbrStart]\033[0m\033[1m starting Daemon on \e[4m$line\033[0m"
 		cmd+=" --tab -t \"Daemon $line\" -e \"ssh $id@$line 'sleep $time; java -cp $DATA_FOLDER ordo.DaemonImpl $line'\""
 	fi	
-	index=$(($index+1))
-	echo -e "\033[1;32m[$i/$nbrStart]\033[0m starting\033[1m Daemon on \e[4m$line\033[0m"
 	i=$((i+1))
 done < "$input"
 eval $cmd

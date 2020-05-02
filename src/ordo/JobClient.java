@@ -13,10 +13,9 @@ import hdfs.HdfsClient;
 import hdfs.NameNode;
 import map.MapReduce;
 
-public class Job implements JobInterface {
+public class JobClient {
 
-
-	private Format.Type inputFormat;
+    private Format.Type inputFormat;
 	private Format.Type outputFormat;
 	private Format.Type resReduceFormat;
 	private String inputFName;
@@ -24,9 +23,11 @@ public class Job implements JobInterface {
 	private String resReduceFName;
 	private int nbMaps; 
 	private List<ArrayList<String>> chunkList = new ArrayList<ArrayList<String>>();
+	private long jobId;
 
 
-	public Job(Format.Type inputFormat, String inputFName) {
+
+	public JobClient(Format.Type inputFormat, String inputFName) {
 		this.inputFormat = inputFormat;
 		this.inputFName = inputFName;
 		this.outputFormat = Format.Type.KV;
@@ -35,20 +36,35 @@ public class Job implements JobInterface {
 		this.resReduceFName = inputFName + "-resf";
 	}
 
-	public void startJob (MapReduce mr){
-		
-		System.out.println("Lancement du job ...");
+	public void startJob (MapReduce mr) {
+
+		System.out.println("Submit job ...");
 		// Création des formats
 		//Format input = new LineFormat(getInputFName());
 		Format output = new KVFormat(getOutputFName());
 		Format resReduce = new KVFormat(getResReduceFName());
 
 		NameNode nm = null;
-		// Récupération du NameNode
+		JobManager jm = null;
+		// Récupération du NameNode et JobManager
 		try {
 			System.out.println("Récupération du stub du NameNode");
 			nm = (NameNode)Naming.lookup("//"+Project.NAMENODE+":"+Project.PORT_NAMENODE+"/NameNode");
 			System.out.println("Stub du NameNode récupéré !!");
+			System.out.println("Récupération du stub du JobManager");
+			jm = (JobManager)Naming.lookup("//"+Project.NAMENODE+":"+Project.PORT_NAMENODE+"/JobManager");
+			System.out.println("Stub du JobManager récupéré !!");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		//Initialisation côté JobManager
+		try {
+			System.out.println("Ajout du Job au JobManager...");
+			long id = jm.addJob(mr, getInputFormat(), getInputFName());
+			this.jobId = id;
+			System.out.println("Lancement du Job...");
+			jm.startJob(id);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -58,7 +74,7 @@ public class Job implements JobInterface {
 		List<Daemon> demons = new ArrayList<Daemon>();
 		List<String> demonsName = new ArrayList<String>();
 		try {
-			demonsName = nm.getAvalaibleDaemons();
+			demonsName = jm.getAvalaibleDaemons();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -85,20 +101,14 @@ public class Job implements JobInterface {
 		// Mise à jour du nombre de maps à effectuer
 		setNbMaps(getChunkList().size());
 
-		// Initialisation du callback
-		System.out.println("Initialisation du Callback ...");
-		Callback cb = null;
-		try {
-			cb = new CallbackImpl(getNbMaps());
-			System.out.println("CallBack initialisé !!\n");
-		} catch (RemoteException e) {
-			e.printStackTrace();
-		}
-		
-
 		// Lancement des maps sur les démons
 		System.out.println("Lancement des maps ...");
 		for(int i = 0; i < getNbMaps(); i++) {
+			try {
+				jm.submitMap(jobId, i);
+			} catch (RemoteException e) {
+				e.printStackTrace();
+			}
 			// On définit le nom du chunk
 			String chunk = getInputFName().split("\\.")[0] + "-serverchunk"+ i + "." + getInputFName().split("\\.")[1];
 			// On récupère le nom de la machine qui possède le chunk
@@ -112,7 +122,7 @@ public class Job implements JobInterface {
 			Format outputTmp = new KVFormat(Project.DATA_FOLDER + chunk + "-map");
 			// On appelle runMap sur le bon démon
 			try {
-				d.runMap(mr, inputTmp, outputTmp, cb);
+				d.runMap(mr, inputTmp, outputTmp, jobId);
 			} catch (RemoteException e) {
 				e.printStackTrace();
 			}
@@ -122,7 +132,10 @@ public class Job implements JobInterface {
 		// Puis on attends que tous les démons aient finis leur travail
 		System.out.println("Attente du callback des Daemons ...");
 		try {
-			cb.waitMapDone();
+			int maps = jm.nbMapDone(jobId);
+			while(maps<nbMaps) {
+				maps = jm.nbMapDone(jobId);
+			}
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		}

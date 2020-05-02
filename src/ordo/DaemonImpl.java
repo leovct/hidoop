@@ -3,13 +3,10 @@ package ordo;
 import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
-import java.rmi.server.UnicastRemoteObject ;
-
+import java.rmi.server.UnicastRemoteObject;
 import config.Project;
 import formats.Format;
 import map.Mapper;
-import hdfs.NameNode;
-
 
 public class DaemonImpl extends UnicastRemoteObject implements Daemon {
 	private static final long serialVersionUID = 1L;
@@ -22,9 +19,10 @@ public class DaemonImpl extends UnicastRemoteObject implements Daemon {
 		this.serverAddress = serverAddress;
 	}
 
-	public void runMap (Mapper m, Format reader, Format writer,Callback cb) throws RemoteException {
+
+	public void runMap (Mapper m, Format reader, Format writer, long jobId) throws RemoteException {
 		// On créé un thread pour le map
-		MapRunner mapRunner = new MapRunner(m, reader, writer, cb, getServerAddress());
+		MapRunner mapRunner = new MapRunner(m, reader, writer, jobId, getServerAddress());
 		mapRunner.start();    
 
 	}
@@ -66,9 +64,9 @@ public class DaemonImpl extends UnicastRemoteObject implements Daemon {
 				DaemonImpl demon = new DaemonImpl(args[0]);
 				Naming.rebind("//"+demon.getServerAddress()+":"+Project.PORT_DAEMON+"/DaemonImpl",demon);
 				System.out.println(messageHeader+"Daemon bound in registry");
-				//Notify the NameNode of its availability
-				NameNode nameNode = (NameNode) Naming.lookup("//"+Project.NAMENODE+":"+Project.PORT_NAMENODE+"/NameNode");
-				nameNode.notifyDaemonAvailability(demon.getServerAddress());
+				//Notify the JobManager of its availability
+				JobManager jobManager = (JobManager) Naming.lookup("//"+Project.NAMENODE+":"+Project.PORT_NAMENODE+"/JobManager");
+				jobManager.notifyDaemonAvailability(demon.getServerAddress());
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

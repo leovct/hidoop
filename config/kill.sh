@@ -27,8 +27,9 @@ do
 	if [ "$namenode" = true ]
 	then
 		#Kill NameNodeImpl java programs
-		echo -e "\033[1;31m[$i/$nbrKill]\033[0m\033[1m killing NameNode java process on \e[4m$line\033[0m"
+		echo -e "\033[1;31m[$i/$nbrKill]\033[0m\033[1m killing NameNode & JobManager java process on \e[4m$line\033[0m"
   		ssh -n $id@$line pkill -9 -f NameNodeImpl
+		ssh -n $id@$line pkill -9 -f JobManagerImpl
   		namenode=false
   	else
 		#Kill DataNodeImpl and DaemonImpl java programs

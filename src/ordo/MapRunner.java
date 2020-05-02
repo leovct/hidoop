@@ -1,6 +1,5 @@
 package ordo;
 
-import java.rmi.RemoteException;
 import java.rmi.Naming;
 import formats.Format;
 import map.Mapper;
@@ -13,16 +12,16 @@ public class MapRunner extends Thread {
 
 	Mapper m; //map à lancer
 	Format reader, writer; //les formats de lecture et d'écriture
-	Callback cb;
+	long jobId;
 	String serverAddress;
 	private static String messageHeader = ">>> [DAEMON] ";
 	//private static String errorHeader = ">>> [ERROR] ";
 
-	public MapRunner(Mapper m, Format reader, Format writer, Callback cb, String serverAddress){
+	public MapRunner(Mapper m, Format reader, Format writer, long jobId, String serverAddress){
 		this.m = m;
 		this.reader = reader;
 		this.writer = writer;
-		this.cb = cb;
+		this.jobId = jobId;
 		this.serverAddress = serverAddress;
 	}
 
@@ -38,24 +37,27 @@ public class MapRunner extends Thread {
 		reader.close();
 		writer.close();
 
+		// Préparation des paramètres
+		String chunkName = writer.getFname();
+		long chunkSize = new File(chunkName).length();
+		String[] chunkNameSplit = chunkName.split("/");
+		String chunkNameWOPath = chunkNameSplit[chunkNameSplit.length-1];
+		String filename = chunkNameWOPath.split("-")[0];
+		int chunkNumber = Integer.parseInt(((chunkNameWOPath.split("-")[1]).split("\\.")[0]).split("(?<=\\D)(?=\\d)")[1]);
+
 		//Notification au NameNode
 		try {	
-			String chunkName = writer.getFname();
-			long chunkSize = new File(chunkName).length();
-			String[] chunkNameSplit = chunkName.split("/");
-			String chunkNameWOPath = chunkNameSplit[chunkNameSplit.length-1];
-			String filename = chunkNameWOPath.split("-")[0];
-			int chunkNumber = Integer.parseInt(((chunkNameWOPath.split("-")[1]).split("\\.")[0]).split("(?<=\\D)(?=\\d)")[1]);
 			NameNode nameNode = (NameNode) Naming.lookup("//"+Project.NAMENODE+":"+Project.PORT_NAMENODE+"/NameNode");
 			nameNode.chunkWritten(filename+".txt-map", -1, (int)chunkSize, 1, chunkNumber, serverAddress);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		
-		//Envoie du callback
-		try {
-			cb.incNbMapDone();   
-		} catch (RemoteException e) {  
+		//Notification du JobManager
+		try {	
+			JobManager jobManager = (JobManager) Naming.lookup("//"+Project.NAMENODE+":"+Project.PORT_NAMENODE+"/JobManager");
+			jobManager.notifyMapDone(jobId, chunkNumber);
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 
