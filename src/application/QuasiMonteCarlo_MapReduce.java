@@ -6,7 +6,7 @@ import formats.KV;
 import map.MapReduce;
 import ordo.JobClient;
 
-public class QuasiMonteCarlo implements MapReduce {
+public class QuasiMonteCarlo_MapReduce implements MapReduce {
 	
 	private static final long serialVersionUID = 1L;
 	private static long insideCircle;
@@ -63,7 +63,7 @@ public class QuasiMonteCarlo implements MapReduce {
 		// Launch QuasiMonteCarlo and display the execution time
 		JobClient j = new JobClient("quasi-monte-carlo");
         long t1 = System.currentTimeMillis();
-		j.startJob(new QuasiMonteCarlo());
+		j.startJob(new QuasiMonteCarlo_MapReduce());
 		long t2 = System.currentTimeMillis();
         System.out.println("Computation time for the QuasiMonteCarlo map/reduce algorithm: "+(t2-t1)+"ms");
         

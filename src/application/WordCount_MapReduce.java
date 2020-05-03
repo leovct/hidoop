@@ -11,7 +11,7 @@ import formats.FormatReader;
 import formats.FormatWriter;
 import formats.KV;
 
-public class MyMapReduce implements MapReduce {
+public class WordCount_MapReduce implements MapReduce {
 	private static final long serialVersionUID = 1L;
 
 	// MapReduce program that computes word counts
@@ -43,7 +43,7 @@ public class MyMapReduce implements MapReduce {
 	public static void main(String args[]) {
 		JobClient j = new JobClient(Format.Type.LINE,args[0]);
         long time = System.currentTimeMillis();
-		j.startJob(new MyMapReduce());
+		j.startJob(new WordCount_MapReduce());
 		time = System.currentTimeMillis() - time;
         System.out.println("time in ms ="+(time));
         System.exit(0);
