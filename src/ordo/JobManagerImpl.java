@@ -90,7 +90,6 @@ public class JobManagerImpl extends UnicastRemoteObject implements JobManager {
 		//(new Thread(this.dataWriter)).start(); //Run data writing in backup file
 		this.printMetadata();
 		return id;		
-
     }
 
     @Override

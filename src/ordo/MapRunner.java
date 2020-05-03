@@ -26,15 +26,22 @@ public class MapRunner extends Thread {
 	}
 
 	public void run() {
-		System.out.println(messageHeader + "Lancement du map sur le fichier " + reader.getFname());
-		// Ouverture du fichier contenant le fragment sur lequel exécuter le map
-		reader.open(Format.OpenMode.R);
+		if (reader != null) {
+			System.out.println(messageHeader + "Lancement du map sur le fichier " + reader.getFname());
+			// Ouverture du fichier contenant le fragment sur lequel exécuter le map
+			reader.open(Format.OpenMode.R);
+		} else {
+			System.out.println(messageHeader + "Lancement du map");
+		}
+		
 		//Ouverture du fichier dans lequel les résultats du map doivent être écrits
 		writer.open(Format.OpenMode.W);
 		//Lancement du map sur le fragment
 		m.map(reader, writer);
 		//Fermeture des fichiers en lecture et écriture
-		reader.close();
+		if (this.reader != null) {
+			reader.close();
+		}
 		writer.close();
 
 		// Préparation des paramètres
@@ -43,12 +50,22 @@ public class MapRunner extends Thread {
 		String[] chunkNameSplit = chunkName.split("/");
 		String chunkNameWOPath = chunkNameSplit[chunkNameSplit.length-1];
 		String filename = chunkNameWOPath.split("-")[0];
-		int chunkNumber = Integer.parseInt(((chunkNameWOPath.split("-")[1]).split("\\.")[0]).split("(?<=\\D)(?=\\d)")[1]);
+		int chunkNumber;
+		if (this.reader != null) {
+			chunkNumber = Integer.parseInt(((chunkNameWOPath.split("-")[1]).split("\\.")[0]).split("(?<=\\D)(?=\\d)")[1]);
+		} else {
+			chunkNumber = Integer.parseInt(chunkNameWOPath.split("serverchunk")[1]);
+		}
+		
 
 		//Notification au NameNode
 		try {	
 			NameNode nameNode = (NameNode) Naming.lookup("//"+Project.NAMENODE+":"+Project.PORT_NAMENODE+"/NameNode");
-			nameNode.chunkWritten(filename+".txt-map", -1, (int)chunkSize, 1, chunkNumber, serverAddress);
+			if (this.reader != null) {
+				nameNode.chunkWritten(filename+".txt-map", -1, (int)chunkSize, 1, chunkNumber, serverAddress);
+			} else {
+				nameNode.chunkWritten(chunkNameWOPath.split("-serverchunk")[0], -1, (int)chunkSize, 1, chunkNumber, serverAddress);
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -61,6 +78,10 @@ public class MapRunner extends Thread {
 			e.printStackTrace();
 		}
 
-		System.out.println(messageHeader + "Map sur le fichier " + reader.getFname() + " terminé !");
+		if (this.reader != null) {
+			System.out.println(messageHeader + "Map sur le fichier " + reader.getFname() + " terminé !");
+		} else {
+			System.out.println(messageHeader + "Map terminé !");
+		}
 	}
 }

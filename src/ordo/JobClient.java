@@ -25,8 +25,6 @@ public class JobClient {
 	private List<ArrayList<String>> chunkList = new ArrayList<ArrayList<String>>();
 	private long jobId;
 
-
-
 	public JobClient(Format.Type inputFormat, String inputFName) {
 		this.inputFormat = inputFormat;
 		this.inputFName = inputFName;
@@ -35,10 +33,20 @@ public class JobClient {
 		this.resReduceFormat = Format.Type.KV;
 		this.resReduceFName = inputFName + "-resf";
 	}
+	
+	public JobClient(String name) {
+		this.inputFormat = null;
+		this.inputFName = null;
+		this.outputFormat = Format.Type.KV;
+		this.outputFName = name+"-map";
+		this.resReduceFormat = Format.Type.KV;
+		this.resReduceFName = name+"-resf";
+	}
 
 	public void startJob (MapReduce mr) {
 
 		System.out.println("Submit job ...");
+		
 		// Création des formats
 		//Format input = new LineFormat(getInputFName());
 		Format output = new KVFormat(getOutputFName());
@@ -88,19 +96,24 @@ public class JobClient {
 		}
 		System.out.println("Daemons récupérés !!");
 
-		//Récupération de la liste des chunks
-		try {
-			System.out.println("Récupération de la liste des chunks ..."); 
-			ArrayList<ArrayList<String>> chunks = nm.readFileRequest(getInputFName());
-			setChunkList(chunks);
-			System.out.println("Chunks récupérés !!\n");
-		} catch (Exception e) {
-			e.printStackTrace();
+		if (this.inputFName != null) {
+			//Récupération de la liste des chunks
+			try {
+				System.out.println("Récupération de la liste des chunks ..."); 
+				ArrayList<ArrayList<String>> chunks = nm.readFileRequest(getInputFName());
+				setChunkList(chunks);
+				System.out.println("Chunks récupérés !!\n");
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			
+			// Mise à jour du nombre de maps à effectuer
+			setNbMaps(getChunkList().size());
+		} else {
+			// Effectuer un map par démon (ex. dans le cas de QuasiMonteCarlo)
+			setNbMaps(demons.size());
 		}
 		
-		// Mise à jour du nombre de maps à effectuer
-		setNbMaps(getChunkList().size());
-
 		// Lancement des maps sur les démons
 		System.out.println("Lancement des maps ...");
 		for(int i = 0; i < getNbMaps(); i++) {
@@ -109,17 +122,31 @@ public class JobClient {
 			} catch (RemoteException e) {
 				e.printStackTrace();
 			}
-			// On définit le nom du chunk
-			String chunk = getInputFName().split("\\.")[0] + "-serverchunk"+ i + "." + getInputFName().split("\\.")[1];
-			// On récupère le nom de la machine qui possède le chunk
-			String machine = getChunkList().get(i).get(0);
-			// On récupère le numéro du démon sur lequel lancer le map
-			int numDaemon = demonsName.indexOf(machine);
-			// On récupère le bon démon dans la liste des démons
-			Daemon d = demons.get(numDaemon);
+			
+			String chunk;
+			Daemon d;
+			Format inputTmp, outputTmp;
+			if (this.inputFName != null) {
+				// On définit le nom du chunk
+				chunk = getInputFName().split("\\.")[0] + "-serverchunk"+ i + "." + getInputFName().split("\\.")[1];
+				// On récupère le nom de la machine qui possède le chunk
+				String machine = getChunkList().get(i).get(0);
+				// On récupère le numéro du démon sur lequel lancer le map
+				int numDaemon = demonsName.indexOf(machine);
+				// On récupère le bon démon dans la liste des démons
+				d = demons.get(numDaemon);
+				// On change le nom des Formats pour qu'ils correspondent aux fragments
+				inputTmp = new LineFormat(Project.DATA_FOLDER + chunk);
+				outputTmp = new KVFormat(Project.DATA_FOLDER + chunk + "-map");
+			} else {
+				chunk = getOutputFName()+"-serverchunk" + i;
+				d = demons.get(i);
+				inputTmp = null;
+				outputTmp = new KVFormat(Project.DATA_FOLDER + chunk);
+			}
+			
 			// On change le nom des Formats pour qu'ils correspondent aux fragments
-			Format inputTmp = new LineFormat(Project.DATA_FOLDER + chunk);
-			Format outputTmp = new KVFormat(Project.DATA_FOLDER + chunk + "-map");
+			
 			// On appelle runMap sur le bon démon
 			try {
 				d.runMap(mr, inputTmp, outputTmp, jobId);
@@ -127,6 +154,7 @@ public class JobClient {
 				e.printStackTrace();
 			}
 		}
+		
 		System.out.println("Lancement des maps terminé !!\n");
 
 		// Puis on attends que tous les démons aient finis leur travail
