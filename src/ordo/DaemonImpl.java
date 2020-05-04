@@ -24,7 +24,6 @@ public class DaemonImpl extends UnicastRemoteObject implements Daemon {
 		// On créé un thread pour le map
 		MapRunner mapRunner = new MapRunner(m, reader, writer, jobId, getServerAddress());
 		mapRunner.start();    
-
 	}
 
 	/**

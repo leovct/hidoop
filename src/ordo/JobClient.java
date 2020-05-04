@@ -116,21 +116,22 @@ public class JobClient {
 		
 		// Lancement des maps sur les démons
 		System.out.println("Lancement des maps ...");
-		for(int i = 0; i < getNbMaps(); i++) {
-			try {
-				jm.submitMap(jobId, i);
-			} catch (RemoteException e) {
-				e.printStackTrace();
-			}
-			
+		for(int i = 0; i < getNbMaps(); i++) {			
 			String chunk;
 			Daemon d;
 			Format inputTmp, outputTmp;
 			if (this.inputFName != null) {
 				// On définit le nom du chunk
 				chunk = getInputFName().split("\\.")[0] + "-serverchunk"+ i + "." + getInputFName().split("\\.")[1];
-				// On récupère le nom de la machine qui possède le chunk
-				String machine = getChunkList().get(i).get(0);
+				// On récupère le nom des machines qui possède le chunk
+				ArrayList<String> machines = getChunkList().get(i); 
+				//On récupère le serveur qui s'occupera du map
+				String machine = null;
+				try {
+					machine = jm.submitMap(jobId, i, machines);
+				} catch (RemoteException e) {
+					e.printStackTrace();
+				}
 				// On récupère le numéro du démon sur lequel lancer le map
 				int numDaemon = demonsName.indexOf(machine);
 				// On récupère le bon démon dans la liste des démons
@@ -140,7 +141,16 @@ public class JobClient {
 				outputTmp = new KVFormat(Project.DATA_FOLDER + chunk + "-map");
 			} else {
 				chunk = getOutputFName()+"-serverchunk" + i;
-				d = demons.get(i);
+				String machine = null;
+				try {
+					machine = jm.submitMap(jobId, i, null);
+				} catch (RemoteException e) {
+					e.printStackTrace();
+				}
+				// On récupère le numéro du démon sur lequel lancer le map
+				int numDaemon = demonsName.indexOf(machine);
+				// On récupère le bon démon dans la liste des démons
+				d = demons.get(numDaemon);
 				inputTmp = null;
 				outputTmp = new KVFormat(Project.DATA_FOLDER + chunk);
 			}

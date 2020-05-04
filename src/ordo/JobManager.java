@@ -43,7 +43,7 @@ public interface JobManager extends Remote {
      * @param chunk_id
      * @throws RemoteException
      */
-    public void submitMap(long jobId, int chunk_id) throws RemoteException;
+    public String submitMap(long jobId, int chunk_id, ArrayList<String> servers) throws RemoteException;
 
     /**
      * Notify that a map is done on a deamon
@@ -52,7 +52,7 @@ public interface JobManager extends Remote {
      * @param chunk_id
      * @throws RemoteException
      */
-    public void notifyMapDone(long jobId, int chunk_id) throws RemoteException;
+    public void notifyMapDone(long jobId, int chunk_id, String serverAddress) throws RemoteException;
 
     /**
      * Get the number of maps done for a job

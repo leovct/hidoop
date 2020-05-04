@@ -13,6 +13,10 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 import config.Project;
@@ -42,7 +46,7 @@ public class JobManagerImpl extends UnicastRemoteObject implements JobManager {
 	 * Reachable Daemons (Daemons known alive).
 	 * Server addresses.
 	 */
-	private ArrayList<String> avalaibleDaemons;
+	private ConcurrentHashMap<String, Integer> avalaibleDaemons;
 
 	/**
 	 * Data writer of the NameNode.
@@ -72,7 +76,7 @@ public class JobManagerImpl extends UnicastRemoteObject implements JobManager {
 
     protected JobManagerImpl() throws RemoteException {
         if (!this.recoverData()) this.metadata = new ConcurrentHashMap<Long, JobData>();
-		this.avalaibleDaemons = new ArrayList<String>();
+		this.avalaibleDaemons = new ConcurrentHashMap<String, Integer>();
 		//this.dataWriter = new DataWriter();
 		this.printMetadata();
     }
@@ -119,7 +123,7 @@ public class JobManagerImpl extends UnicastRemoteObject implements JobManager {
 	}
 
 	@Override
-	public void submitMap(long jobId, int chunkId) throws RemoteException {
+	public String submitMap(long jobId, int chunkId, ArrayList<String> servers) throws RemoteException {
 		System.out.println("-------SubmitJob---------");
 		if (!this.metadata.containsKey(jobId)) {
 			System.err.println(errorHeader + "Job " + jobId
@@ -131,10 +135,34 @@ public class JobManagerImpl extends UnicastRemoteObject implements JobManager {
 			//(new Thread(this.dataWriter)).start(); //Run data writing in backup file
 			this.printMetadata();
 		}
+
+		// Retourne la liste des serveurs dans l'ordre croissant du nb de maps
+		Set<Entry<String,Integer>> entries = this.avalaibleDaemons.entrySet();     
+		List<Entry<String,Integer>> sortedEntries = new ArrayList<>(entries);
+		Collections.sort(sortedEntries, (o1, o2) -> o1.getValue().compareTo(o2.getValue()));
+
+		String serverAddress;
+		if (servers == null){
+			// Si on a un map sans file en entrée, on retourne le serveur avec le moins de map running
+			serverAddress = sortedEntries.get(0).getKey();
+			System.out.println(serverAddress);;
+			this.avalaibleDaemons.merge(serverAddress, 1, (a,b) -> a+b);
+			return serverAddress;
+		} else {
+			// Sinon, on retourne le serveur avec le moins de map running parmi la liste des serveurs possédant le chunk
+			for (Entry<String,Integer> entry : sortedEntries){
+				if (servers.contains(entry.getKey())) {
+					serverAddress = entry.getKey();
+					this.avalaibleDaemons.merge(serverAddress, 1, (a,b) -> a+b);
+					return serverAddress;
+				}
+			}
+		}
+		return null;
 	}
 	
 	@Override
-	public void notifyMapDone(long jobId, int chunkId) throws RemoteException {
+	public void notifyMapDone(long jobId, int chunkId, String serverAddress) throws RemoteException {
 		System.out.println("-------MapDone---------");
 		if (!this.metadata.containsKey(jobId)) {
 			System.err.println(errorHeader + "Job " + jobId
@@ -142,9 +170,17 @@ public class JobManagerImpl extends UnicastRemoteObject implements JobManager {
 		} else {
 			JobData jobData = this.metadata.get(jobId);
 			jobData.setMapState(chunkId, true);
-			//(new Thread(this.dataWriter)).start(); //Run data writing in backup file
-			this.printMetadata();
 		}
+
+		if (!this.avalaibleDaemons.containsKey(serverAddress)) {
+			System.err.println(errorHeader + "Server " + serverAddress
+					+ " unknown to JobManager");
+		} else {
+			this.avalaibleDaemons.merge(serverAddress, 1, (a,b) -> a-b);
+		}
+
+		//(new Thread(this.dataWriter)).start(); //Run data writing in backup file
+		this.printMetadata();
 	}
 
 	@Override
@@ -155,8 +191,8 @@ public class JobManagerImpl extends UnicastRemoteObject implements JobManager {
 
     @Override
     public void notifyDaemonAvailability(String serverAddress) throws RemoteException {
-        if (!this.avalaibleDaemons.contains(serverAddress)) {
-			this.avalaibleDaemons.add(serverAddress);
+        if (!this.avalaibleDaemons.containsKey(serverAddress)) {
+			this.avalaibleDaemons.put(serverAddress,0);
 		}
 		System.out.println(messageHeader + "Daemon running on " + serverAddress + " connected");
 
@@ -164,8 +200,15 @@ public class JobManagerImpl extends UnicastRemoteObject implements JobManager {
 
     @Override
     public ArrayList<String> getAvalaibleDaemons() throws RemoteException {
-        if (this.avalaibleDaemons.isEmpty()) return null;
-		else return this.avalaibleDaemons;
+        if (this.avalaibleDaemons.isEmpty()) {
+			return null;
+		} else {
+			ArrayList<String> daemons = new ArrayList<String>();
+			for (String avDaemons : this.avalaibleDaemons.keySet()) {
+				daemons.add(avDaemons);
+			}
+			return daemons;
+		}
     }
 
     /**

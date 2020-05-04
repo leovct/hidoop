@@ -1,6 +1,9 @@
 package ordo;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import formats.Format;
 import map.MapReduce;
@@ -57,8 +60,14 @@ public class JobData implements Serializable {
      * @param chunk_id number of the chunk
      * @param state boolean representing the state of the map
      */
-    public void setMapState(int chunk_id, boolean state) {
-        this.mapState.replace(chunk_id, state);
+    public void setMapState(int chunkId, boolean state) {
+        if (chunkId == -1) {
+            List<Boolean> states= new ArrayList<Boolean>(this.mapState.values());
+            int i = states.indexOf(false);
+            this.mapState.replace(i, state); 
+        } else {
+            this.mapState.replace(chunkId, state);
+        }
         if (state == true) {
             this.nbMapsDone++;
         } else {

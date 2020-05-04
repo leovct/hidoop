@@ -73,7 +73,7 @@ public class MapRunner extends Thread {
 		//Notification du JobManager
 		try {	
 			JobManager jobManager = (JobManager) Naming.lookup("//"+Project.NAMENODE+":"+Project.PORT_NAMENODE+"/JobManager");
-			jobManager.notifyMapDone(jobId, chunkNumber);
+			jobManager.notifyMapDone(jobId, chunkNumber, serverAddress);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
