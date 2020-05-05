@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.concurrent.ConcurrentHashMap;
 
-import config.Project;
+import config.SettingsManager;
 
 public class NameNodeImpl extends UnicastRemoteObject implements NameNode {
 	/**
@@ -28,7 +28,7 @@ public class NameNodeImpl extends UnicastRemoteObject implements NameNode {
 	private static final String noDataNodeError = errorHeader
 			+ "No DataNode server avalaible";
 	private static final long serialVersionUID = 1L;
-	private static final String backupFile = Project.DATA_FOLDER + "namenode-data";
+	private static final String backupFile = SettingsManager.DATA_FOLDER + "namenode-data";
 
 	/**
 	 * Metadata for files on the file system.
@@ -42,12 +42,6 @@ public class NameNodeImpl extends UnicastRemoteObject implements NameNode {
 	 * Servers addresses.
 	 */
 	private ArrayList<String> avalaibleDataNodes;
-
-	/**
-	 * Reachable Daemons (Daemons known alive).
-	 * Server addresses.
-	 */
-	private ArrayList<String> avalaibleDaemons;
 
 	/**
 	 * Replication factor of the NameNode.
@@ -88,7 +82,6 @@ public class NameNodeImpl extends UnicastRemoteObject implements NameNode {
 	public NameNodeImpl() throws RemoteException {
 		if (!this.recoverData()) this.metadata = new ConcurrentHashMap<String, FileData>();
 		this.avalaibleDataNodes = new ArrayList<String>();
-		this.avalaibleDaemons = new ArrayList<String>();
 		this.defaultReplicationFactor = 1;
 		this.dataWriter = new DataWriter();
 		this.printMetadata();
@@ -263,18 +256,6 @@ public class NameNodeImpl extends UnicastRemoteObject implements NameNode {
 		System.out.println(messageHeader + "DataNode running on " + serverAddress + " connected");
 	}
 
-	@Override
-	public void notifyDaemonAvailability(String serverAddress) throws RemoteException {
-		if (!this.avalaibleDaemons.contains(serverAddress)) this.avalaibleDaemons.add(serverAddress);
-		System.out.println(messageHeader + "Daemon running on " + serverAddress + " connected");
-	}
-
-	@Override
-	public ArrayList<String> getAvalaibleDaemons() throws RemoteException {
-		if (this.avalaibleDaemons.isEmpty()) return null;
-		else return this.avalaibleDaemons;
-	}
-
 	/**
 	 * Load NameNode data from an existing backup local file.
 	 * 
@@ -319,7 +300,6 @@ public class NameNodeImpl extends UnicastRemoteObject implements NameNode {
 			}
 		}
 		System.out.println(metadataPrinting + "available DataNodes : " + this.avalaibleDataNodes);
-		System.out.println(metadataPrinting + "available Daemons : " + this.avalaibleDaemons);
 	}
 
 	/**
@@ -337,13 +317,13 @@ public class NameNodeImpl extends UnicastRemoteObject implements NameNode {
 			e1.printStackTrace();
 		}
 		try{
-			LocateRegistry.createRegistry(Project.PORT_NAMENODE);
+			LocateRegistry.createRegistry(SettingsManager.PORT_NAMENODE);
 		} catch(Exception e) {}
 		try {
-			Naming.bind("//"+Project.NAMENODE+":"+Project.PORT_NAMENODE+"/NameNode", new NameNodeImpl());
+			Naming.bind("//"+SettingsManager.getMasterNodeAddress()+":"+SettingsManager.PORT_NAMENODE+"/NameNode", new NameNodeImpl());
 			System.out.println(messageHeader + "NameNode bound in registry");
-			if (!(new File(Project.DATA_FOLDER).exists())) {
-				(new File(Project.DATA_FOLDER)).mkdirs(); //Create data directory
+			if (!(new File(SettingsManager.DATA_FOLDER).exists())) {
+				(new File(SettingsManager.DATA_FOLDER)).mkdirs(); //Create data directory
 			}
 		} catch (AlreadyBoundException e) {
 			System.err.println(errorHeader + "NameNode is already running on this server");

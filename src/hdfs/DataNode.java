@@ -3,7 +3,7 @@ package hdfs;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 
-import config.Project.Command;
+import config.SettingsManager.Command;
 	
 /**
  * Server NameNode interface

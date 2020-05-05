@@ -82,19 +82,4 @@ public interface NameNode extends Remote {
 	 * @param serverAddress address of the server running the DataNode
 	 */
 	public void notifyNameNodeAvailability(String serverAddress) throws RemoteException;
-	
-	/**
-	 * Notify the NameNode of the availability of a Daemon on a given server.
-	 * 
-	 * @param serverAddress address of the server running the Daemon
-	 */
-	public void notifyDaemonAvailability(String serverAddress) throws RemoteException;
-	
-	/**
-	 * Get the list of Daemons known currently available by the NameNode.
-	 * 
-	 * @return
-	 * @throws RemoteException
-	 */
-	public ArrayList<String> getAvalaibleDaemons() throws RemoteException;
 }

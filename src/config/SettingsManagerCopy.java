@@ -5,7 +5,7 @@ import java.io.File;
 import formats.Format;
 import formats.LineFormat;
 
-public class SettingsManager {
+public class SettingsManagerCopy {
 	public enum Command{CMD_READ, CMD_WRITE, CMD_DELETE}
 	
 	/**
