@@ -4,7 +4,7 @@ import java.rmi.Naming;
 import formats.Format;
 import map.Mapper;
 import hdfs.NameNode;
-import config.Project;
+import config.SettingsManager;
 import java.io.File;
 
 
@@ -60,7 +60,7 @@ public class MapRunner extends Thread {
 
 		//Notification au NameNode
 		try {	
-			NameNode nameNode = (NameNode) Naming.lookup("//"+Project.NAMENODE+":"+Project.PORT_NAMENODE+"/NameNode");
+			NameNode nameNode = (NameNode) Naming.lookup("//"+SettingsManager.getMasterNodeAddress()+":"+SettingsManager.PORT_NAMENODE+"/NameNode");
 			if (this.reader != null) {
 				nameNode.chunkWritten(filename+".txt-map", -1, (int)chunkSize, 1, chunkNumber, serverAddress);
 			} else {
@@ -72,7 +72,7 @@ public class MapRunner extends Thread {
 		
 		//Notification du JobManager
 		try {	
-			JobManager jobManager = (JobManager) Naming.lookup("//"+Project.NAMENODE+":"+Project.PORT_NAMENODE+"/JobManager");
+			JobManager jobManager = (JobManager) Naming.lookup("//"+SettingsManager.getMasterNodeAddress()+":"+SettingsManager.PORT_NAMENODE+"/JobManager");
 			jobManager.notifyMapDone(jobId, chunkNumber, serverAddress);
 		} catch (Exception e) {
 			e.printStackTrace();

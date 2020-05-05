@@ -4,7 +4,7 @@ import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
-import config.Project;
+import config.SettingsManager;
 import formats.Format;
 import map.Mapper;
 import map.Reducer;
@@ -59,7 +59,7 @@ public class DaemonImpl extends UnicastRemoteObject implements Daemon {
 		if (args.length > 0) {
 			try {
 				//RMI registry creation
-				LocateRegistry.createRegistry(Project.PORT_DAEMON);
+				LocateRegistry.createRegistry(SettingsManager.PORT_DAEMON);
 				System.out.println(messageHeader+"RMI registry created");
 			} catch (Exception e) {
 				System.out.println(messageHeader+"RMI registry exists already");
@@ -68,10 +68,10 @@ public class DaemonImpl extends UnicastRemoteObject implements Daemon {
 			try {
 				//Bind the daemon to the RMI register
 				DaemonImpl demon = new DaemonImpl(args[0]);
-				Naming.rebind("//"+demon.getServerAddress()+":"+Project.PORT_DAEMON+"/DaemonImpl",demon);
+				Naming.rebind("//"+demon.getServerAddress()+":"+SettingsManager.PORT_DAEMON+"/DaemonImpl",demon);
 				System.out.println(messageHeader+"Daemon bound in registry");
 				//Notify the JobManager of its availability
-				JobManager jobManager = (JobManager) Naming.lookup("//"+Project.NAMENODE+":"+Project.PORT_NAMENODE+"/JobManager");
+				JobManager jobManager = (JobManager) Naming.lookup("//"+SettingsManager.getMasterNodeAddress()+":"+SettingsManager.PORT_NAMENODE+"/JobManager");
 				jobManager.notifyDaemonAvailability(demon.getServerAddress());
 			} catch (Exception e) {
 				e.printStackTrace();

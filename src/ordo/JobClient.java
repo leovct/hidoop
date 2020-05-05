@@ -5,7 +5,7 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
 
-import config.Project;
+import config.SettingsManager;
 import formats.Format;
 import formats.KVFormat;
 import formats.LineFormat;
@@ -58,10 +58,10 @@ public class JobClient {
 		// Récupération du NameNode et JobManager
 		try {
 			System.out.println(messageHeader + "Récupération du stub du NameNode");
-			nm = (NameNode)Naming.lookup("//"+Project.NAMENODE+":"+Project.PORT_NAMENODE+"/NameNode");
+			nm = (NameNode)Naming.lookup("//"+SettingsManager.getMasterNodeAddress()+":"+SettingsManager.PORT_NAMENODE+"/NameNode");
 			System.out.println(messageHeader + "Stub du NameNode récupéré !!");
 			System.out.println(messageHeader + "Récupération du stub du JobManager");
-			jm = (JobManager)Naming.lookup("//"+Project.NAMENODE+":"+Project.PORT_NAMENODE+"/JobManager");
+			jm = (JobManager)Naming.lookup("//"+SettingsManager.getMasterNodeAddress()+":"+SettingsManager.PORT_NAMENODE+"/JobManager");
 			System.out.println(messageHeader + "Stub du JobManager récupéré !!");
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -89,8 +89,8 @@ public class JobClient {
 		}
 		for(String serverAddress : demonsName) {
 			try {
-				System.out.println(messageHeader + "On récupère le stub de : //"+serverAddress+":"+Project.PORT_DAEMON+"/DaemonImpl" );
-				demons.add((Daemon)Naming.lookup("//"+serverAddress+":"+Project.PORT_DAEMON+"/DaemonImpl"));
+				System.out.println(messageHeader + "On récupère le stub de : //"+serverAddress+":"+SettingsManager.PORT_DAEMON+"/DaemonImpl" );
+				demons.add((Daemon)Naming.lookup("//"+serverAddress+":"+SettingsManager.PORT_DAEMON+"/DaemonImpl"));
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -138,8 +138,8 @@ public class JobClient {
 				// On récupère le bon démon dans la liste des démons
 				d = demons.get(numDaemon);
 				// On change le nom des Formats pour qu'ils correspondent aux fragments
-				inputTmp = new LineFormat(Project.DATA_FOLDER + chunk);
-				outputTmp = new KVFormat(Project.DATA_FOLDER + chunk + "-map");
+				inputTmp = new LineFormat(SettingsManager.DATA_FOLDER + chunk);
+				outputTmp = new KVFormat(SettingsManager.DATA_FOLDER + chunk + "-map");
 			} else {
 				chunk = getOutputFName()+"-serverchunk" + i;
 				String machine = null;
@@ -153,7 +153,7 @@ public class JobClient {
 				// On récupère le bon démon dans la liste des démons
 				d = demons.get(numDaemon);
 				inputTmp = null;
-				outputTmp = new KVFormat(Project.DATA_FOLDER + chunk);
+				outputTmp = new KVFormat(SettingsManager.DATA_FOLDER + chunk);
 			}
 			
 			// On change le nom des Formats pour qu'ils correspondent aux fragments
