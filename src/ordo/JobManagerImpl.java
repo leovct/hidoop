@@ -145,7 +145,6 @@ public class JobManagerImpl extends UnicastRemoteObject implements JobManager {
 		if (servers == null){
 			// Si on a un map sans file en entrée, on retourne le serveur avec le moins de map running
 			serverAddress = sortedEntries.get(0).getKey();
-			System.out.println(serverAddress);;
 			this.avalaibleDaemons.merge(serverAddress, 1, (a,b) -> a+b);
 			return serverAddress;
 		} else {
