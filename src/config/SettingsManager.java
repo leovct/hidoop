@@ -7,7 +7,7 @@ import formats.LineFormat;
 
 public class SettingsManager {
 	public enum Command{CMD_READ, CMD_WRITE, CMD_DELETE}
-	
+
 	/**
 	 * Storage folder on servers.
 	 * Must be the same as argument given to runner bash scripts.
@@ -25,7 +25,7 @@ public class SettingsManager {
 
 	public static final int PORT_HDFSSERVEUR = 4698;
 
-	public static final String SERVERS_CONFIG = "config/servers.config";
+	public static final String SERVERS_CONFIG = "/config/servers.config";
 
 	public static final int megaOctet = 1000000;
 
@@ -35,7 +35,7 @@ public class SettingsManager {
 	 * Size of chunks.
 	 */
 	public static int CHUNK_SIZE = 64*mebiOctet;
-	
+
 	/**
 	 * Reads MasterNode's address from servers configuration file.
 	 * 
@@ -43,14 +43,14 @@ public class SettingsManager {
 	 */
 	public static String getMasterNodeAddress() {
 		if ((new File(SERVERS_CONFIG)).exists()) {
-			LineFormat lineFormat = new LineFormat(SERVERS_CONFIG);
+			LineFormat lineFormat = new LineFormat(System.getProperty("java.class.path") + SERVERS_CONFIG);
 			lineFormat.open(Format.OpenMode.R);
 			String value = lineFormat.read().v;
 			lineFormat.close();
 			return value;
 		} else {
-			System.err.println("[SETTINGS] Could not load settings file "
-					+ SERVERS_CONFIG);
+			System.err.println(">>> [SETTINGS] Could not load settings file "
+					+ System.getProperty("java.class.path") + SERVERS_CONFIG);
 			return null;
 		}
 	}
