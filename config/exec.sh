@@ -24,7 +24,7 @@ else
 	DATA_FOLDER=$2
 fi
 
-time=5 #time DataNode and Daemons wait before starting (wait for the NameNode to start)
+time=4 #time DataNode and Daemons wait before starting (wait for the NameNode to start)
 id=$1
 namenode=true
 input=config/servers.config
