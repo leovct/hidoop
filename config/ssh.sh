@@ -19,9 +19,9 @@ fi
 
 id=$1
 
-input=$PWD/config/servers
+input=$PWD/config/servers.config
 i=1
-nbrAdd=$(< config/servers wc -l)
+nbrAdd=$(< $input wc -l)
 while IFS= read -r line
 do
 	#add computer @line to the fingerprint

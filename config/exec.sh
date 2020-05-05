@@ -27,10 +27,10 @@ fi
 time=5 #time DataNode and Daemons wait before starting (wait for the NameNode to start)
 id=$1
 namenode=true
-input=config/servers
+input=config/servers.config
 cmd=""
 i=1
-nbrStart=$(< config/servers wc -l)
+nbrStart=$(< $input wc -l)
 nbrStart=$((nbrStart*2))
 while IFS= read -r line
 do

@@ -25,9 +25,9 @@ else
 fi 
 
 id=$1
-input=$PWD/config/servers
+input=$PWD/config/servers.config
 i=1
-nbrDeploy=$(< config/servers wc -l)
+nbrDeploy=$(< $input wc -l)
 while IFS= read -r line
 do
 	#Delete all files on server

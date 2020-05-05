@@ -12,8 +12,8 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 
-import config.Project;
-import config.Project.Command;
+import config.SettingsManager;
+import config.SettingsManager.Command;
 import formats.Format;
 import formats.KV;
 import formats.KVFormat;
@@ -77,7 +77,7 @@ public class HdfsClient {
 		System.out.println(messageHeader
 				+ "%WRITE% Processing file " + localFSSourceFname + "...");
 		try { //Connection to NameNode
-			nameNode = (NameNode) Naming.lookup("//"+Project.NAMENODE+":"+Project.PORT_NAMENODE+"/NameNode"); 
+			nameNode = (NameNode) Naming.lookup("//"+SettingsManager.getMasterNodeAddress()+":"+SettingsManager.PORT_NAMENODE+"/NameNode"); 
 		} catch (NotBoundException e) {
 			System.err.println(nameNodeNotBoundError);
 			return;
@@ -93,7 +93,7 @@ public class HdfsClient {
 		while ((structure = input.read()) != null) {
 			try {
 				nameNodeResponse = nameNode.writeChunkRequest(repFactor);
-				dataNode = (DataNode) Naming.lookup("//"+nameNodeResponse.get(0)+":"+Project.PORT_DATANODE+"/DataNode");
+				dataNode = (DataNode) Naming.lookup("//"+nameNodeResponse.get(0)+":"+SettingsManager.PORT_DATANODE+"/DataNode");
 				socket = new Socket(nameNodeResponse.get(0), 
 						dataNode.processChunk(Command.CMD_WRITE, fileName, fileExtension, chunkCounter));
 				socketOutputStream = new ObjectOutputStream(socket.getOutputStream());
@@ -104,19 +104,19 @@ public class HdfsClient {
 				buf = structure.writeSyntax(fmt);
 				socketOutputStream.write(buf, 0, buf.length);
 				index = input.getIndex();
-				while ((input.getIndex() - index <= Project.CHUNK_SIZE) && (structure = input.read())!= null) { 
+				while ((input.getIndex() - index <= SettingsManager.CHUNK_SIZE) && (structure = input.read())!= null) { 
 					buf = structure.writeSyntax(fmt);
 					socketOutputStream.write(buf, 0, buf.length);
 				}
 				socketOutputStream.close();
 				socket.close();
 				for (String server : nameNodeResponse) {
-					nameNode.chunkWritten(fileName+fileExtension, -1, Project.CHUNK_SIZE, repFactor, 
+					nameNode.chunkWritten(fileName+fileExtension, -1, SettingsManager.CHUNK_SIZE, repFactor, 
 							chunkCounter, server);
 				}
-				if (structure != null && structure.v.length() > Project.CHUNK_SIZE) 
+				if (structure != null && structure.v.length() > SettingsManager.CHUNK_SIZE) 
 					System.err.println(errorHeader + "Input file contains "
-							+ "a structure value whose size is bigger than chunk size ("+Project.CHUNK_SIZE+")");
+							+ "a structure value whose size is bigger than chunk size ("+SettingsManager.CHUNK_SIZE+")");
 				System.out.println(messageHeader + "Chunk n°" + chunkCounter + " sent on server "
 						+ nameNodeResponse.get(0));
 				chunkCounter++;
@@ -165,7 +165,7 @@ public class HdfsClient {
 		System.out.println(messageHeader
 				+ "%READ% Processing file " + fileName+fileExtension + "...");
 		try { //Connection to NameNode
-			nameNode = (NameNode) Naming.lookup("//"+Project.NAMENODE+":"+Project.PORT_NAMENODE+"/NameNode");
+			nameNode = (NameNode) Naming.lookup("//"+SettingsManager.getMasterNodeAddress()+":"+SettingsManager.PORT_NAMENODE+"/NameNode");
 			nameNodeResponse = nameNode.readFileRequest(fileName+fileExtension);
 			if (nameNodeResponse == null) {
 				System.err.println(NameNodeFileError);
@@ -185,7 +185,7 @@ public class HdfsClient {
 			chunkHandle = 0;
 			while (!chunkRead && chunkHandle < chunkHandles.size()) {
 				try {
-					dataNode = (DataNode) Naming.lookup("//"+chunkHandles.get(chunkHandle)+":"+Project.PORT_DATANODE+"/DataNode");
+					dataNode = (DataNode) Naming.lookup("//"+chunkHandles.get(chunkHandle)+":"+SettingsManager.PORT_DATANODE+"/DataNode");
 					socket = new Socket(chunkHandles.get(chunkHandle), dataNode.processChunk(Command.CMD_READ, fileName, fileExtension, chunkCounter));
 					socketInputStream = new ObjectInputStream(socket.getInputStream());
 					if ((objectReceived = socketInputStream.readObject()) instanceof Command 
@@ -251,7 +251,7 @@ public class HdfsClient {
 		System.out.println(messageHeader
 				+ "%DELETE% Deleting file " + fileName+fileExtension + "...");
 		try { //Connection to NameNode
-			nameNode = (NameNode) Naming.lookup("//"+Project.NAMENODE+":"+Project.PORT_NAMENODE+"/NameNode");
+			nameNode = (NameNode) Naming.lookup("//"+SettingsManager.getMasterNodeAddress()+":"+SettingsManager.PORT_NAMENODE+"/NameNode");
 			nameNodeResponse = nameNode.deleteFileRequest(fileName+fileExtension);
 			if (nameNodeResponse == null) {
 				System.err.println(NameNodeFileError);
@@ -269,7 +269,7 @@ public class HdfsClient {
 		}
 		for (String server : nameNodeResponse) {
 			try {
-				dataNode = (DataNode) Naming.lookup("//"+server+":"+Project.PORT_DATANODE+"/DataNode");
+				dataNode = (DataNode) Naming.lookup("//"+server+":"+SettingsManager.PORT_DATANODE+"/DataNode");
 				dataNode.processChunk(Command.CMD_DELETE, fileName, fileExtension, chunkCounter);
 			} catch (Exception e) {
 				System.out.println(dataNodeNotBoundError + " : " + server);
@@ -296,7 +296,7 @@ public class HdfsClient {
 	 */
 	public static boolean notifyNameNode(String fileName, int fileSize, int chunkSize, int replicationFactor, int chunkNumber, String server) {
 		try { //Connection to NameNode
-			NameNode nameNode = (NameNode) Naming.lookup("//"+Project.NAMENODE+":"+Project.PORT_NAMENODE+"/NameNode");
+			NameNode nameNode = (NameNode) Naming.lookup("//"+SettingsManager.getMasterNodeAddress()+":"+SettingsManager.PORT_NAMENODE+"/NameNode");
 			nameNode.chunkWritten(fileName, fileSize, chunkSize, replicationFactor, chunkNumber, server);
 		} catch (NotBoundException e) {
 			System.err.println(nameNodeNotBoundError);

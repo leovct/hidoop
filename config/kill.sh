@@ -19,9 +19,9 @@ fi
 
 id=$1
 namenode=true
-input=$PWD/config/servers
+input=$PWD/config/servers.config
 i=1
-nbrKill=$(< config/servers wc -l)
+nbrKill=$(< $input wc -l)
 while IFS= read -r line
 do
 	if [ "$namenode" = true ]
