@@ -25,7 +25,7 @@ public class SettingsManager {
 
 	public static final int PORT_HDFSSERVEUR = 4698;
 
-	public static final String SERVERS_CONFIG = "/config/servers.config";
+	public static final String SERVERS_CONFIG = System.getProperty("java.class.path") + "/config/servers.config";
 
 	public static final int megaOctet = 1000000;
 
@@ -43,14 +43,14 @@ public class SettingsManager {
 	 */
 	public static String getMasterNodeAddress() {
 		if ((new File(SERVERS_CONFIG)).exists()) {
-			LineFormat lineFormat = new LineFormat(System.getProperty("java.class.path") + SERVERS_CONFIG);
+			LineFormat lineFormat = new LineFormat(SERVERS_CONFIG);
 			lineFormat.open(Format.OpenMode.R);
 			String value = lineFormat.read().v;
 			lineFormat.close();
 			return value;
 		} else {
 			System.err.println(">>> [SETTINGS] Could not load settings file "
-					+ System.getProperty("java.class.path") + SERVERS_CONFIG);
+					+ SERVERS_CONFIG);
 			return null;
 		}
 	}
