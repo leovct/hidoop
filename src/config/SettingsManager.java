@@ -6,6 +6,9 @@ import formats.Format;
 import formats.LineFormat;
 
 public class SettingsManager {
+	/**
+	 * Command type for communication between HDFS entities.
+	 */
 	public enum Command{CMD_READ, CMD_WRITE, CMD_DELETE}
 
 	/**
@@ -18,28 +21,30 @@ public class SettingsManager {
 	 * Ports.
 	 */
 	public static final int PORT_DAEMON = 4321;
-
 	public static final int PORT_NAMENODE = 4023;
-
 	public static final int PORT_DATANODE = 4027;
-
 	public static final int PORT_HDFSSERVEUR = 4698;
-
-	public static final String SERVERS_CONFIG = System.getProperty("java.class.path") + "/config/servers.config";
-
-	public static final int megaOctet = 1000000;
-
-	public static final int mebiOctet = 1024*1024;
-
+	
 	/**
 	 * Size of chunks.
 	 */
-	public static int CHUNK_SIZE = 64*mebiOctet;
+	public static final int mebiOctet = 1024*1024;
+	public static final int CHUNK_SIZE = 64*mebiOctet;
+	
+	/**
+	 * 
+	 */
+	public static final String TAG_DATANODE = "-serverchunk";
 
+	/**
+	 * Path for servers configuration file.
+	 */
+	public static final String SERVERS_CONFIG = System.getProperty("java.class.path") + "/config/servers.config";
+	
 	/**
 	 * Reads MasterNode's address from servers configuration file.
 	 * 
-	 * @return
+	 * @return address of MasterNode's server.
 	 */
 	public static String getMasterNodeAddress() {
 		if ((new File(SERVERS_CONFIG)).exists()) {

@@ -23,23 +23,11 @@ import config.SettingsManager;
 import config.SettingsManager.Command;
 
 public class DataNodeImpl extends UnicastRemoteObject implements DataNode {
-	private static final long serialVersionUID = 1L;
-
-	/**
-	 * Master NameNode.
-	 */
-	private NameNode nameNode;
-
-	/**
-	 * Address of the server the DataNode is running on.
-	 */
-	private String serverAddress;
-
 	/**
 	 * Constants.
 	 */
-	private static final int bufferSize = 100;
-	private static String tagDataNode = "-serverchunk";
+	private static final long serialVersionUID = 1L;
+	private static final int bufferSize = 4096;
 	private static String messageHeader = ">>> [DATANODE] ";
 	private static String errorHeader = ">>> [ERROR] ";
 	private static final String receivedMessageHeaderError = errorHeader + "Message header "
@@ -50,6 +38,16 @@ public class DataNodeImpl extends UnicastRemoteObject implements DataNode {
 			+ "chunks on this server for file ";
 	private static final String nameNodeNotBoundError = errorHeader + "NameNode is not "
 			+ "bound in registry, leaving process";
+	
+	/**
+	 * Master NameNode.
+	 */
+	private NameNode nameNode;
+
+	/**
+	 * Address of the server the DataNode is running on.
+	 */
+	private String serverAddress;
 
 	/**
 	 * Runnable class performing operations
@@ -124,7 +122,7 @@ public class DataNodeImpl extends UnicastRemoteObject implements DataNode {
 			}
 			try { //Receive chunk
 				bos = new BufferedOutputStream(new FileOutputStream(
-						SettingsManager.DATA_FOLDER+fileName+tagDataNode+this.chunkNumber+fileExtension), bufferSize);
+						SettingsManager.DATA_FOLDER+fileName+SettingsManager.TAG_DATANODE+this.chunkNumber+fileExtension), bufferSize);
 				while((nbRead = socketInputStream.read(buf)) != -1) { 
 					bos.write(buf, 0, nbRead);
 				}
@@ -132,7 +130,7 @@ public class DataNodeImpl extends UnicastRemoteObject implements DataNode {
 				socketInputStream.close();
 				communicationSocket.close();
 				this.serverSocket.close();
-				System.out.println(messageHeader + "Chunk received : "+fileName+tagDataNode+this.chunkNumber+fileExtension);
+				System.out.println(messageHeader + "Chunk received : "+fileName+SettingsManager.TAG_DATANODE+this.chunkNumber+fileExtension);
 				if (repFactor > 1) { //Propagate chunk
 					DataNode dataNode = (DataNode) Naming.lookup("//"+copiesLocations.get(0)+":"+SettingsManager.PORT_DATANODE+"/DataNode");
 					socketPropagateChunkCopy = new Socket(copiesLocations.get(0), 
@@ -143,7 +141,7 @@ public class DataNodeImpl extends UnicastRemoteObject implements DataNode {
 						socketOutputStream.writeObject(server);
 					}
 					bis = new BufferedInputStream(new FileInputStream(
-							SettingsManager.DATA_FOLDER+fileName+tagDataNode+this.chunkNumber+fileExtension), bufferSize);
+							SettingsManager.DATA_FOLDER+fileName+SettingsManager.TAG_DATANODE+this.chunkNumber+fileExtension), bufferSize);
 					while((nbRead = bis.read(buf)) != -1) {
 						socketOutputStream.write(buf, 0, nbRead);
 					}
@@ -171,9 +169,9 @@ public class DataNodeImpl extends UnicastRemoteObject implements DataNode {
 			try {
 				Socket communicationSocket = serverSocket.accept();
 				socketOutputStream = new ObjectOutputStream(communicationSocket.getOutputStream());
-				if ((new File(SettingsManager.DATA_FOLDER+fileName+tagDataNode+chunkNumber+fileExtension)).exists()) {
+				if ((new File(SettingsManager.DATA_FOLDER+fileName+SettingsManager.TAG_DATANODE+chunkNumber+fileExtension)).exists()) {
 					bis = new BufferedInputStream(new FileInputStream(
-							SettingsManager.DATA_FOLDER+fileName+tagDataNode+chunkNumber+fileExtension), bufferSize);
+							SettingsManager.DATA_FOLDER+fileName+SettingsManager.TAG_DATANODE+chunkNumber+fileExtension), bufferSize);
 					socketOutputStream.writeObject(Command.CMD_READ);
 					socketOutputStream.writeObject(fileName);
 					socketOutputStream.writeObject(fileExtension);
@@ -185,7 +183,7 @@ public class DataNodeImpl extends UnicastRemoteObject implements DataNode {
 					System.out.println(messageHeader + "Chunk n°" + chunkNumber + " from file " + fileName + fileExtension
 							+ " sent to client");
 				} else System.err.println(chunkNotFoundError 
-						+ " : " +SettingsManager.DATA_FOLDER+fileName+tagDataNode+chunkNumber+fileExtension);
+						+ " : " +SettingsManager.DATA_FOLDER+fileName+SettingsManager.TAG_DATANODE+chunkNumber+fileExtension);
 				socketOutputStream.close();
 				communicationSocket.close();
 				this.serverSocket.close();
@@ -201,14 +199,14 @@ public class DataNodeImpl extends UnicastRemoteObject implements DataNode {
 			boolean chunkFound = false;
 			int chunkNumber;
 			for (String file : (new File(SettingsManager.DATA_FOLDER)).list()) {
-				if (file.startsWith(fileName+tagDataNode) && file.endsWith(fileExtension)) {
+				if (file.startsWith(fileName+SettingsManager.TAG_DATANODE) && file.endsWith(fileExtension)) {
 					try {
-						chunkNumber = Integer.parseInt(file.substring((fileName+tagDataNode).length(),
+						chunkNumber = Integer.parseInt(file.substring((fileName+SettingsManager.TAG_DATANODE).length(),
 								file.lastIndexOf(fileExtension)));
 						if ((new File(SettingsManager.DATA_FOLDER+file)).delete()) {
 							nameNode.chunkDeleted(fileName+fileExtension, chunkNumber, serverAddress);
 							System.out.println(messageHeader + "Chunk deleted : "
-									+SettingsManager.DATA_FOLDER+fileName+tagDataNode+chunkNumber+fileExtension);
+									+SettingsManager.DATA_FOLDER+fileName+SettingsManager.TAG_DATANODE+chunkNumber+fileExtension);
 						} else System.err.println(errorHeader + "Could not delete file " + file);
 					} catch (RemoteException e) {
 						System.out.println(nameNodeNotBoundError);
@@ -239,18 +237,17 @@ public class DataNodeImpl extends UnicastRemoteObject implements DataNode {
 	public int processChunk(SettingsManager.Command command, String fileName, String fileExtension, int chunkNumber) {
 		boolean avalaiblePortFound = false;
 		ServerSocket testSocket;
-		int counter = 0, port = (new Random()).nextInt(63000) + 2000;
-		while (!avalaiblePortFound && counter < 10000) {
+		int maxTry = 10000, counter = 0, port = (new Random()).nextInt(63000) + 2000;
+		while (!avalaiblePortFound && counter < maxTry) {
 			try {
 				testSocket = new ServerSocket(port);
 				testSocket.close();
 				(new Thread(new TaskExecutor(port, command, fileName, fileExtension, chunkNumber))).start();
 				avalaiblePortFound = true;
-			} catch (IOException ex) { //Port is occupied
-			}
+			} catch (IOException ex) {} //Port is occupied
 			counter++;
 		}
-		if (counter == 100) return -1;
+		if (counter == maxTry) return -1;
 		else return port;
 	}		
 
