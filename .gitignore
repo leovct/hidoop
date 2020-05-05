@@ -18,3 +18,4 @@
 doc
 *.pdf
 *.docx
+config/servers.config
