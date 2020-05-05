@@ -28,6 +28,7 @@ id=$1
 rm */*/*.class
 [ -d "bin" ] || mkdir bin
 javac -d bin */*/*.java
+cp config/servers.config bin/config/servers.config
 input=config/servers
 i=1
 nbrDeploy=$(< config/servers wc -l)
