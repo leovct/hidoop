@@ -27,6 +27,8 @@ public class NameNodeImpl extends UnicastRemoteObject implements NameNode {
 	private static String metadataPrinting = ">>> [METADATA] ";
 	private static final String noDataNodeError = errorHeader
 			+ "No DataNode server avalaible";
+	private static final String illegalReplicationFactorError = errorHeader
+			+ "Replication factor must be strictly positive";
 	private static final long serialVersionUID = 1L;
 	private static final String backupFile = SettingsManager.DATA_FOLDER + "namenode-data";
 
@@ -106,6 +108,10 @@ public class NameNodeImpl extends UnicastRemoteObject implements NameNode {
 	@Override
 	public ArrayList<String> writeChunkRequest(int replicationFactor) throws RemoteException {
 		// FIXME Implement best choice pick among avaIlable servers
+		if (replicationFactor < 1) {
+			System.err.println(illegalReplicationFactorError);
+			return null;
+		}
 		int numberReturned = replicationFactor < this.avalaibleDataNodes.size() ?
 				replicationFactor : this.avalaibleDataNodes.size();
 		if (numberReturned > 0) {
@@ -123,6 +129,7 @@ public class NameNodeImpl extends UnicastRemoteObject implements NameNode {
 
 	@Override
 	public ArrayList<ArrayList<String>> readFileRequest(String fileName) throws RemoteException {
+		fileName = ignorePath(fileName);
 		if (!this.metadata.containsKey(fileName)) {
 			System.err.println(errorHeader + "File " + fileName
 					+ " unknown to NameNode");
@@ -165,6 +172,7 @@ public class NameNodeImpl extends UnicastRemoteObject implements NameNode {
 
 	@Override
 	public ArrayList<String> deleteFileRequest(String fileName) throws RemoteException {
+		fileName = ignorePath(fileName);
 		if (!this.metadata.containsKey(fileName)) {
 			System.err.println(errorHeader + "File " + fileName
 					+ " unknown to NameNode");
@@ -195,6 +203,7 @@ public class NameNodeImpl extends UnicastRemoteObject implements NameNode {
 	public void chunkWritten(String fileName, int fileSize, int chunkSize, int replicationFactor, int chunkNumber, String server) 
 			throws RemoteException {
 		FileData fileData;
+		fileName = ignorePath(fileName);
 		if (!this.metadata.containsKey(fileName)) {
 			fileData = new FileData(fileSize, chunkSize, replicationFactor); //FIXME file size
 			fileData.addChunkLocation(chunkNumber, server);
@@ -222,6 +231,7 @@ public class NameNodeImpl extends UnicastRemoteObject implements NameNode {
 	@Override
 	public void allChunkWritten(String fileName) {
 		FileData fileData;
+		fileName = ignorePath(fileName);
 		if (!this.metadata.containsKey(fileName)) { //Empty file
 			fileData = new FileData(0, 0, 1);
 			this.metadata.put(fileName, fileData);
@@ -284,6 +294,18 @@ public class NameNodeImpl extends UnicastRemoteObject implements NameNode {
 		} else return false;
 	}
 
+	/**
+	 * Returns name of the file located at given path.
+	 * Ignores folder path.
+	 * 
+	 * @param filePath
+	 * @return name of the file
+	 */
+	public String ignorePath(String filePath) {
+		return ((filePath.contains("/")) ? filePath.substring(filePath.lastIndexOf('/')+1) : 
+			((filePath.contains("\\")) ? filePath.substring(filePath.lastIndexOf('\\')+1) : filePath));
+	}
+	
 	/**
 	 * Prints metadata on output stream.
 	 */
