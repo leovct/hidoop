@@ -7,6 +7,7 @@ import java.rmi.server.UnicastRemoteObject;
 import config.Project;
 import formats.Format;
 import map.Mapper;
+import map.Reducer;
 
 public class DaemonImpl extends UnicastRemoteObject implements Daemon {
 	private static final long serialVersionUID = 1L;
@@ -24,6 +25,12 @@ public class DaemonImpl extends UnicastRemoteObject implements Daemon {
 		// On créé un thread pour le map
 		MapRunner mapRunner = new MapRunner(m, reader, writer, jobId, getServerAddress());
 		mapRunner.start();    
+	}
+
+	public void runReduce (Reducer r, Format reader, Format writer, long jobId) throws RemoteException {
+		// On créé un thread pour le map
+		ReduceRunner reduceRunner = new ReduceRunner(r, reader, writer, jobId, getServerAddress());
+		reduceRunner.start();    
 	}
 
 	/**
