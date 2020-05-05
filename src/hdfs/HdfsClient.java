@@ -41,6 +41,8 @@ public class HdfsClient {
 			+ "does not respond";
 	private static final String NameNodeFileError = errorHeader + "Specified file "
 			+ "could not be retrieved from NameNode";
+	private static final String replicationFactorError = errorHeader + "<replicationfactor> "
+			+ "must be a strictly positive integer";
 
 	/**
 	 * Buffer size constant
@@ -347,45 +349,49 @@ public class HdfsClient {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		if (args.length < 2 || args.length > 4) printUsage();
-		else {
+		if (args.length > 1 && args.length < 5) {
 			switch (args[0]) {
 			case "write":
-				if (args.length < 3) printUsage();
-				else if (args[1].equals("line"))
-					if (!(new File(args[2]).exists())) {
-						System.err.println(errorHeader + "File "+args[2]+" could not be found");
-					} else {
+				if (args.length > 2) {
+					int replicationFactor = 1;
+					if (args.length > 3) {
 						try {
-							HdfsWrite(Format.Type.LINE, args[2], (args.length > 3) ? Integer.parseInt(args[3]) : 1);
+							if (!((replicationFactor = Integer.parseInt(args[3])) > 0)) {
+								System.out.println(replicationFactorError);
+								printUsage();
+								return;
+							}
 						} catch (NumberFormatException e) {
+							System.out.println(replicationFactorError);
 							printUsage();
-							System.out.println("\n<replicationfactor> must be an integer");
+							return;
 						}
 					}
-				else if (args[1].equals("kv"))
-					if (!(new File(args[2]).exists())) {
-						System.err.println(errorHeader + "File "+args[2]+" could not be found");
-					} else {
-						try {
-							HdfsWrite(Format.Type.KV, args[2], (args.length > 3) ? Integer.parseInt(args[3]) : 1);
-						} catch (NumberFormatException e) {
+					if ((new File(args[2])).exists()) {
+						switch (args[1]) {
+						case "line":
+							HdfsWrite(Format.Type.LINE, args[2], replicationFactor);
+							break;
+						case "kv":
+							HdfsWrite(Format.Type.KV, args[2], replicationFactor);
+							break;
+						default:
 							printUsage();
-							System.out.println("<replicationfactor> must be an integer");
 						}
-					}
-				else printUsage();
+					} else System.err.println(errorHeader + "File "+args[2]+" could not be found");
+				} else printUsage();
 				break;
 			case "read":
-				if (args.length < 3) printUsage();
+				if (args.length != 3) printUsage();
 				else HdfsRead(args[1], args[2]);
 				break;
 			case "delete":
-				HdfsDelete(args[1]);
+				if (args.length != 2) printUsage();
+				else HdfsDelete(args[1]);
 				break;
 			default:
 				printUsage();
 			}
-		}
+		} else printUsage();
 	}
 }
