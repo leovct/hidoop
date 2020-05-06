@@ -1,6 +1,6 @@
 #!/bin/bash
 display_usage() {  
-	echo -e "\033[1musage: ./hidoop-init.sh \033[1;31m<serversloginID>\033[0m [optional:dataPathOnServers]" 
+	echo -e "\033[1musage: ./hidoop-init.sh \033[1;31m<serversloginID>\033[0m" 
 }
 
 display_logo() {
