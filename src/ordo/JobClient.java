@@ -26,9 +26,15 @@ public class JobClient {
 	private long jobId;
 	private static String messageHeader = ">>> [JOBCLIENT] ";
 
+	public String ignorePath(String filePath) {
+		return ((filePath.contains("/")) ? filePath.substring(filePath.lastIndexOf('/')+1) : 
+			((filePath.contains("\\")) ? filePath.substring(filePath.lastIndexOf('\\')+1) : filePath));
+	}
+
 	public JobClient(Format.Type inputFormat, String inputFName) {
 		this.inputFormat = inputFormat;
-		this.inputFName = inputFName;
+		this.inputFName = ((inputFName.contains("/")) ? inputFName.substring(inputFName.lastIndexOf('/')+1) : 
+			((inputFName.contains("\\")) ? inputFName.substring(inputFName.lastIndexOf('\\')+1) : inputFName));
 		this.outputFormat = Format.Type.KV;
 		this.outputFName = inputFName + "-map";
 		this.resReduceFormat = Format.Type.KV;
@@ -172,10 +178,16 @@ public class JobClient {
 		System.out.println(messageHeader + "Attente du callback des Daemons ...");
 		try {
 			int maps = jm.nbMapDone(jobId);
+			int mapsTemp = 0;
 			System.out.println(messageHeader + maps + "/" + this.nbMaps +" maps effectués");
 			while(maps<nbMaps) {
 				maps = jm.nbMapDone(jobId);
-				System.out.println(messageHeader + maps + "/" + this.nbMaps +" maps effectués");
+				if (maps>mapsTemp) {
+					System.out.println(messageHeader + maps + "/" + this.nbMaps +" maps effectués");
+					mapsTemp++;
+				}
+				
+				
 			}
 		} catch (RemoteException e) {
 			e.printStackTrace();
