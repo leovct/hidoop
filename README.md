@@ -1,7 +1,7 @@
 # Hidoop     
 ![Language Java](https://img.shields.io/badge/Language-Java-blue "Language Java") ![Status Development](https://img.shields.io/badge/Status-Development-brightgreen "Status Development")  
 Simple **Big Data Platform** running **MapReduce applications**, inspired by Hadoop.  
-This platform allows the execution of applications based on MapReduce programming model on a cluster.
+Hidoop is a platform allowing the execution of applications based on MapReduce programming model on a computer cluster.
 
 This project is a very first experiment on the theme of competing applications for intensive computing and mass data processing.  
 It consists in a lite version of Hadoop, composed of two modules :
