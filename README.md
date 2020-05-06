@@ -11,13 +11,14 @@ It consists in a lite version of Hadoop, composed of two modules :
 ## Overview
 
 This application allows its user to **process large data sets across multiple servers** using the MapReduce programming model.  
-MapReduce programming model is used to **parallelize the processing of large-scale data** among a cluster. Each server from the cluster processes a small part of data.
+MapReduce programming model is used to **parallelize the processing of large-scale data** among a cluster.  
+Each server from the cluster processes a small part of data.
 In this project, processing data takes place in 3 steps :  
 * Data (provided as a file) is cut into small chunks and spread over the servers (process managed by __HDFS__)
 * Each server processes a small part amount data (__Map__)
 * Server results are collected and aggregated (__Reduce__)
 
-__Map__ and __Reduce__ processes depend on the purpose of the MapReduce application, and can be entirely designed by user. The strength of this model lies in the parallelisation of processes.  
+__Map__ and __Reduce__ processes depend on the purpose of the MapReduce application, and can be entirely designed by user. The strength of this model lies in the parallelization of processes.  
 For example, MapReduce programming model can be use to parallelize the counting of the number of occurrences of a specific word in a large dataset.
 
 ## Getting started :pushpin:
@@ -52,7 +53,8 @@ Server **written first** (at the top of the list) will automatically be set as *
 
 #### Other settings
 
-Extra settings can be configured, such as **chunk size** or **data storage folder** where to store data on servers. Current version of the project requires these parameters to be configured directly in the code, in file _src/config/settingsManager.java_, in _\*.sh_ and _config/*.sh_ bash scripts.
+Extra settings can be configured, such as **chunk size** or **data storage folder** where to store data on servers.  
+_Current version of the project requires these parameters to be configured directly in the code, in file *src/config/settingsManager.java*, in *\*.sh* and *config/*.sh* bash scripts._
 
 ## Run Hidoop :fast_forward:
 
@@ -100,8 +102,8 @@ In this project, HDFS provides 3 main functionnalities :
 * **Read data :** retrieve data that has been written on servers by _write_ process in order to rebuild a file
 * **Delete data :** delete data stored by servers concerning a specified file
 
-The following instructions can only work if Hidoop platform is running on the cluster (see section above).
-**This project is still under development, please do not try to proceed any meaningful data without making a copy.**
+The following instructions can only work if Hidoop platform is running on the cluster (see section above).  
+:warning: ***This project is still under development, please do not try to proceed any meaningful data without making a copy.***
 
 ### Write a file on HDFS
 
@@ -132,7 +134,7 @@ java -classpath bin hdfs.HdfsClient delete <sourcefilename>
 
 ## Run a MapReduce application on the cluster :eight_spoked_asterisk:
 
-MapReduce application models are given in _src/application_ package (_WordCount\_MapReduce.java_ & _MonteCarlo\MapReduce.java_).
+MapReduce application models are given in _src/application_ package (_WordCount\_MapReduce.java_ & _MonteCarlo\MapReduce.java_).  
 The following instructions can only work if Hidoop platform is running on the cluster.  
 To run MapReduce applications processing data, the **data must first be distributed on the cluster** (see HDFS section above).
 
@@ -148,10 +150,10 @@ java -classpath bin application.WordCount_MapReduce \<filename\>
 *\<sourcefilename\>* is the name of the file to process. It corresponds to the name of a file that has been written on HDFS previously.
 
 > Example : 
-> Large file to process is stored on system, at path _data/filesample.txt_
-> First, write the file on HDFS : `java -classpath bin hdfs.HdfsClient write line data/filesample.txt 1`
-> Then, execute the WordCount application by specifying the name of the file (without the path, HDFS is a flat hierarchy) : `java -classpath bin application.WordCount_MapReduce filesample.txt`
-> Result of process is written in _filesample.txt-resf_ file (in KV format) in project's root folder
+> Large file to process is stored on system, at path _data/filesample.txt_  
+> First, write the file on HDFS : `java -classpath bin hdfs.HdfsClient write line data/filesample.txt 1`  
+> Then, execute the WordCount application by specifying the name of the file (without the path, HDFS is a flat hierarchy) : `java -classpath bin application.WordCount_MapReduce filesample.txt`  
+> Result of process is written in _filesample.txt-resf_ file (in KV format) in project's root folder  
 
 ### Contributors
 Valentin Flageat, Baptiste Gréaud, Léo Vincent
