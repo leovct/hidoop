@@ -64,7 +64,7 @@ public class MapRunner extends Thread {
 			if (this.reader != null) {
 				nameNode.chunkWritten(filename+".txt-map", -1, (int)chunkSize, 1, chunkNumber, serverAddress);
 			} else {
-				nameNode.chunkWritten(chunkNameWOPath.split("-serverchunk")[0], -1, (int)chunkSize, 1, chunkNumber, serverAddress);
+				nameNode.chunkWritten(chunkNameWOPath.split(SettingsManager.TAG_DATANODE)[0], -1, (int)chunkSize, 1, chunkNumber, serverAddress);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

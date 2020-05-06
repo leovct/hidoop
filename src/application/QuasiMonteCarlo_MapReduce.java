@@ -11,8 +11,8 @@ public class QuasiMonteCarlo_MapReduce implements MapReduce {
 	private static final long serialVersionUID = 1L;
 	private static long insideCircle;
 	private static long generated;
-	private static long pointsGeneratedPerMap = 1000000;
-
+	private static long pointsGeneratedPerMap = 1_000_000_000L;
+	
 	@Override
 	public void map(FormatReader reader, FormatWriter writer) {
 		long inside = 0;
@@ -60,8 +60,10 @@ public class QuasiMonteCarlo_MapReduce implements MapReduce {
 	}
 	
 	public static void main(String args[]) {		
-		// Launch QuasiMonteCarlo and display the execution time
+		// Create the Job
 		JobClient j = new JobClient("quasi-monte-carlo");
+		
+		// Launch QuasiMonteCarlo and display the execution time
         long t1 = System.currentTimeMillis();
 		j.startJob(new QuasiMonteCarlo_MapReduce());
 		long t2 = System.currentTimeMillis();

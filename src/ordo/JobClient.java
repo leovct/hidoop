@@ -123,7 +123,7 @@ public class JobClient {
 			Format inputTmp, outputTmp;
 			if (this.inputFName != null) {
 				// On définit le nom du chunk
-				chunk = getInputFName().split("\\.")[0] + "-serverchunk"+ i + "." + getInputFName().split("\\.")[1];
+				chunk = getInputFName().split("\\.")[0] + SettingsManager.TAG_DATANODE + i + "." + getInputFName().split("\\.")[1];
 				// On récupère le nom des machines qui possède le chunk
 				ArrayList<String> machines = getChunkList().get(i); 
 				//On récupère le serveur qui s'occupera du map
@@ -141,7 +141,7 @@ public class JobClient {
 				inputTmp = new LineFormat(SettingsManager.DATA_FOLDER + chunk);
 				outputTmp = new KVFormat(SettingsManager.DATA_FOLDER + chunk + "-map");
 			} else {
-				chunk = getOutputFName()+"-serverchunk" + i;
+				chunk = getOutputFName() + SettingsManager.TAG_DATANODE + i;
 				String machine = null;
 				try {
 					machine = jm.submitMap(jobId, i, null);
