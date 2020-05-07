@@ -27,11 +27,11 @@ public class ReduceRunner extends Thread {
 
 	public void run() {
 		if (reader != null) {
-			System.out.println(messageHeader + "Lancement du map sur le fichier " + reader.getFname());
+			System.out.println(messageHeader + "Starting map on file " + reader.getFname() + " ...");
 			// Ouverture du fichier contenant le fragment sur lequel exécuter le map
 			reader.open(Format.OpenMode.R);
 		} else {
-			System.out.println(messageHeader + "Lancement du map");
+			System.out.println(messageHeader + "Starting map ...");
 		}
 		
 		//Ouverture du fichier dans lequel les résultats du map doivent être écrits
@@ -79,9 +79,9 @@ public class ReduceRunner extends Thread {
 		}
 
 		if (this.reader != null) {
-			System.out.println(messageHeader + "Map sur le fichier " + reader.getFname() + " terminé !");
+			System.out.println(messageHeader + "Map on file " + reader.getFname() + " done !");
 		} else {
-			System.out.println(messageHeader + "Map terminé !");
+			System.out.println(messageHeader + "Map done !");
 		}
     }
 }

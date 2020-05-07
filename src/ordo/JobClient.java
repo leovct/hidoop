@@ -63,29 +63,29 @@ public class JobClient {
 		JobManager jm = null;
 		// Récupération du NameNode et JobManager
 		try {
-			System.out.println(messageHeader + "Récupération du stub du NameNode");
+			System.out.println(messageHeader + "Recovering stub of NameNode ...");
 			nm = (NameNode)Naming.lookup("//"+SettingsManager.getMasterNodeAddress()+":"+SettingsManager.PORT_NAMENODE+"/NameNode");
-			System.out.println(messageHeader + "Stub du NameNode récupéré !!");
-			System.out.println(messageHeader + "Récupération du stub du JobManager");
+			System.out.println(messageHeader + "Stub of NameNode recovered !!");
+			System.out.println(messageHeader + "Recovering stub of JobManager");
 			jm = (JobManager)Naming.lookup("//"+SettingsManager.getMasterNodeAddress()+":"+SettingsManager.PORT_NAMENODE+"/JobManager");
-			System.out.println(messageHeader + "Stub du JobManager récupéré !!");
+			System.out.println(messageHeader + "Stub of JobManager recovered !!");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 
 		//Initialisation côté JobManager
 		try {
-			System.out.println(messageHeader + "Ajout du Job au JobManager...");
+			System.out.println(messageHeader + "Adding Job on JobManager...");
 			long id = jm.addJob(mr, getInputFormat(), getInputFName());
 			this.jobId = id;
-			System.out.println(messageHeader + "Lancement du Job...");
+			System.out.println(messageHeader + "Starting Job...");
 			jm.startJob(id);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 
 		// Récupération de la liste des démons
-		System.out.println(messageHeader + "Récupération de la liste des Daemons ...");
+		System.out.println(messageHeader + "Recovering the list of Daemons ...");
 		List<Daemon> demons = new ArrayList<Daemon>();
 		List<String> demonsName = new ArrayList<String>();
 		try {
@@ -95,21 +95,21 @@ public class JobClient {
 		}
 		for(String serverAddress : demonsName) {
 			try {
-				System.out.println(messageHeader + "On récupère le stub de : //"+serverAddress+":"+SettingsManager.PORT_DAEMON+"/DaemonImpl" );
+				System.out.println(messageHeader + "Recovering stub of : //"+serverAddress+":"+SettingsManager.PORT_DAEMON+"/DaemonImpl" );
 				demons.add((Daemon)Naming.lookup("//"+serverAddress+":"+SettingsManager.PORT_DAEMON+"/DaemonImpl"));
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
-		System.out.println(messageHeader + "Daemons récupérés !!");
+		System.out.println(messageHeader + "Daemons recovered !!");
 
 		if (this.inputFName != null) {
 			//Récupération de la liste des chunks
 			try {
-				System.out.println(messageHeader + "Récupération de la liste des chunks ..."); 
+				System.out.println(messageHeader + "Recovering the list of chunks ..."); 
 				ArrayList<ArrayList<String>> chunks = nm.readFileRequest(getInputFName());
 				setChunkList(chunks);
-				System.out.println(messageHeader + "Chunks récupérés !!\n");
+				System.out.println(messageHeader + "Chunks recovered !!\n");
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -122,7 +122,7 @@ public class JobClient {
 		}
 		
 		// Lancement des maps sur les démons
-		System.out.println(messageHeader + "Lancement des maps ...");
+		System.out.println(messageHeader + "Starting maps ...");
 		for(int i = 0; i < getNbMaps(); i++) {			
 			String chunk;
 			Daemon d;
@@ -172,18 +172,18 @@ public class JobClient {
 			}
 		}
 		
-		System.out.println(messageHeader + "Lancement des maps terminé !!\n");
+		System.out.println(messageHeader + "All maps started !!\n");
 
 		// Puis on attends que tous les démons aient finis leur travail
-		System.out.println(messageHeader + "Attente du callback des Daemons ...");
+		System.out.println(messageHeader + "Waiting for the callback of Daemons ...");
 		try {
 			int maps = jm.nbMapDone(jobId);
 			int mapsTemp = 0;
-			System.out.println(messageHeader + maps + "/" + this.nbMaps +" maps effectués");
+			System.out.println(messageHeader + maps + "/" + this.nbMaps +" maps done");
 			while(maps<nbMaps) {
 				maps = jm.nbMapDone(jobId);
 				if (maps>mapsTemp) {
-					System.out.println(messageHeader + maps + "/" + this.nbMaps +" maps effectués");
+					System.out.println(messageHeader + maps + "/" + this.nbMaps +" maps done");
 					mapsTemp++;
 				}
 				
@@ -192,7 +192,7 @@ public class JobClient {
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		}
-		System.out.println(messageHeader + "Callbacks reçus !!\n");
+		System.out.println(messageHeader + "Callbacks received !!\n");
 
 		// Notifier le NameNode que tous les chunks ont été écrits
 		try {
@@ -211,12 +211,12 @@ public class JobClient {
 		// On peut alors lancer le reduce
 		output.open(Format.OpenMode.R);
 		resReduce.open(Format.OpenMode.W);
-		System.out.println(messageHeader + "Lancement du reduce ...");
+		System.out.println(messageHeader + "Starting reduce ...");
 		mr.reduce(output, resReduce);
-		System.out.println(messageHeader + "Reduce terminé !!!");
+		System.out.println(messageHeader + "Reduce done !!!");
 		output.close();
 		resReduce.close();
-		System.out.println(messageHeader + "Job terminé !!");
+		System.out.println(messageHeader + "Job done !!");
 
 	}
 
