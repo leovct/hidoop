@@ -47,9 +47,14 @@ public class MapRunner extends Thread {
 		String[] chunkNameSplit = chunkName.split("/");
 		String chunkNameWOPath = chunkNameSplit[chunkNameSplit.length-1];
 		String filename = chunkNameWOPath.split("-")[0];
+		String[] name = chunkNameWOPath.split("\\.");
 		int chunkNumber;
 		if (this.reader != null) {
-			chunkNumber = Integer.parseInt(((chunkNameWOPath.split("-")[1]).split("\\.")[0]).split("(?<=\\D)(?=\\d)")[1]);
+			if (name.length == 1) {
+				chunkNumber = Integer.parseInt((chunkNameWOPath.split("-")[1]).split("(?<=\\D)(?=\\d)")[1]);
+			} else {
+				chunkNumber = Integer.parseInt(((chunkNameWOPath.split("-")[1]).split("\\.")[0]).split("(?<=\\D)(?=\\d)")[1]);
+			}
 		} else {
 			chunkNumber = Integer.parseInt(chunkNameWOPath.split("serverchunk")[1]);
 		}
@@ -59,7 +64,11 @@ public class MapRunner extends Thread {
 		try {	
 			NameNode nameNode = (NameNode) Naming.lookup("//"+SettingsManager.getMasterNodeAddress()+":"+SettingsManager.PORT_NAMENODE+"/NameNode");
 			if (this.reader != null) {
-				nameNode.chunkWritten(filename+".txt-map", -1, (int)chunkSize, 1, chunkNumber, serverAddress);
+				if (name.length == 1) {
+					nameNode.chunkWritten(filename+"-map", -1, (int)chunkSize, 1, chunkNumber, serverAddress);
+				} else {
+					nameNode.chunkWritten(filename+"."+ (name[name.length-1]).split("-")[0] + "-map", -1, (int)chunkSize, 1, chunkNumber, serverAddress);
+				}
 			} else {
 				nameNode.chunkWritten(chunkNameWOPath.split(SettingsManager.TAG_DATANODE)[0], -1, (int)chunkSize, 1, chunkNumber, serverAddress);
 			}

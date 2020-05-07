@@ -26,10 +26,6 @@ public class JobClient implements JobInterface {
 	private long jobId;
 	private static String messageHeader = ">>> [JOBCLIENT] ";
 
-	public String ignorePath(String filePath) {
-		return ((filePath.contains("/")) ? filePath.substring(filePath.lastIndexOf('/')+1) : 
-			((filePath.contains("\\")) ? filePath.substring(filePath.lastIndexOf('\\')+1) : filePath));
-	}
 
 	// Constructor in case of map requiring file in input
 	public JobClient(Format.Type inputFormat, String inputFName) {
@@ -134,8 +130,13 @@ public class JobClient implements JobInterface {
 
 			// In case of map requiring file in input
 			if (this.inputFName != null) {
-				// Retrieving the name of the chunk
+				// Retrieving the name of the chunk (managing the extension)
+				String[] name = getInputFname().split("\\.");
+				if (name.length == 1) {
+					chunk = name + SettingsManager.TAG_DATANODE + i;
+				} else {	
 				chunk = getInputFname().split("\\.")[0] + SettingsManager.TAG_DATANODE + i + "." + getInputFname().split("\\.")[1];
+				}
 				// Retrieving the names of the machines which possess the chunk
 				ArrayList<String> machines = getChunkList().get(i); 
 				// Retrieving the server chosen to execute the map
