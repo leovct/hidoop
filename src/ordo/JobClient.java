@@ -29,13 +29,14 @@ public class JobClient implements JobInterface {
 
 	// Constructor in case of map requiring file in input
 	public JobClient(Format.Type inputFormat, String inputFName) {
+		String temp = ((inputFName.contains("/")) ? inputFName.substring(inputFName.lastIndexOf('/')+1) : 
+		((inputFName.contains("\\")) ? inputFName.substring(inputFName.lastIndexOf('\\')+1) : inputFName));
 		this.inputFormat = inputFormat;
-		this.inputFName = ((inputFName.contains("/")) ? inputFName.substring(inputFName.lastIndexOf('/')+1) : 
-			((inputFName.contains("\\")) ? inputFName.substring(inputFName.lastIndexOf('\\')+1) : inputFName));
+		this.inputFName = temp;
 		this.outputFormat = Format.Type.KV;
-		this.outputFName = inputFName + "-map";
+		this.outputFName = SettingsManager.TAG_MAP + temp;
 		this.resReduceFormat = Format.Type.KV;
-		this.resReduceFName = inputFName + "-resf";
+		this.resReduceFName = SettingsManager.TAG_RESULT + temp;
 	}
 	
 	// Constructor in case of map requiring no file in input
@@ -43,9 +44,9 @@ public class JobClient implements JobInterface {
 		this.inputFormat = null;
 		this.inputFName = null;
 		this.outputFormat = Format.Type.KV;
-		this.outputFName = name+"-map";
+		this.outputFName = SettingsManager.TAG_MAP + name;
 		this.resReduceFormat = Format.Type.KV;
-		this.resReduceFName = name+"-resf";
+		this.resReduceFName = SettingsManager.TAG_RESULT + name;
 	}
 
 	public void startJob (MapReduce mr) {
@@ -127,20 +128,15 @@ public class JobClient implements JobInterface {
 			String chunk;
 			Daemon d;
 			Format inputTmp, outputTmp;
-
+			String machine = null;
+			
 			// In case of map requiring file in input
 			if (this.inputFName != null) {
-				// Retrieving the name of the chunk (managing the extension)
-				String[] name = getInputFname().split("\\.");
-				if (name.length == 1) {
-					chunk = name + SettingsManager.TAG_DATANODE + i;
-				} else {	
-				chunk = getInputFname().split("\\.")[0] + SettingsManager.TAG_DATANODE + i + "." + getInputFname().split("\\.")[1];
-				}
+				// Retrieving the name of the chunk	
+				chunk = getInputFname() + SettingsManager.TAG_DATANODE + i ;
 				// Retrieving the names of the machines which possess the chunk
 				ArrayList<String> machines = getChunkList().get(i); 
 				// Retrieving the server chosen to execute the map
-				String machine = null;
 				try {
 					machine = jm.submitMap(jobId, i, machines);
 				} catch (RemoteException e) {
@@ -150,12 +146,11 @@ public class JobClient implements JobInterface {
 				d = demons.get(numDaemon);
 				// Creating the formats for the chunk
 				inputTmp = new LineFormat(SettingsManager.DATA_FOLDER + chunk);
-				outputTmp = new KVFormat(SettingsManager.DATA_FOLDER + chunk + "-map");
+				outputTmp = new KVFormat(SettingsManager.DATA_FOLDER + SettingsManager.TAG_MAP + chunk );
 
 			// In case of map requiring no file in input
 			} else {
-				chunk = getOutputFname() + SettingsManager.TAG_DATANODE + i;
-				String machine = null;
+				chunk = getOutputFname() + SettingsManager.TAG_DATANODE + i ;
 				try {
 					machine = jm.submitMap(jobId, i, null);
 				} catch (RemoteException e) {
