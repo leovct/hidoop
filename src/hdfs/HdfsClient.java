@@ -132,7 +132,7 @@ public class HdfsClient {
 			e.printStackTrace();
 			return;
 		}
-		new File(localFSSourceFname).delete(); //Deletes local file once process completed
+		//new File(localFSSourceFname).delete(); //Deletes local file once process completed
 		System.out.println(messageHeader + "File " + fileName
 				+ " : process completed (" + chunkCounter + " chunks)");
 	}
