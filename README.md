@@ -188,6 +188,6 @@ java -classpath bin application.WordCount_MapReduce <filename>
 Keep in mind that the time saving will only be noticeable on very large files. Indeed, the MapReduce process is quite expensive and is only useful for large files to be processed.  
 :warning: This project is still under development, the results may not be very significant at this time.*  
 
-### Contributors :busts_in_silhouette:
+## Contributors :busts_in_silhouette:
 
 Valentin Flageat, Baptiste Gréaud, Léo Vincent
