@@ -13,7 +13,7 @@ import hdfs.HdfsClient;
 import hdfs.NameNode;
 import map.MapReduce;
 
-public class JobClient {
+public class JobClient implements JobInterface {
 
     private Format.Type inputFormat;
 	private Format.Type outputFormat;
@@ -57,7 +57,7 @@ public class JobClient {
 		System.out.println(messageHeader + "Submit job ...");
 		
 		// Create formats
-		Format output = new KVFormat(getOutputFName());
+		Format output = new KVFormat(getOutputFname());
 		Format resReduce = new KVFormat(getResReduceFName());
 
 		NameNode nm = null;
@@ -77,7 +77,7 @@ public class JobClient {
 		//Initialize JobManager
 		try {
 			System.out.println(messageHeader + "Adding Job on JobManager...");
-			long id = jm.addJob(mr, getInputFormat(), getInputFName());
+			long id = jm.addJob(mr, getInputFormat(), getInputFname());
 			this.jobId = id;
 			System.out.println(messageHeader + "Starting Job...");
 			jm.startJob(id);
@@ -109,7 +109,7 @@ public class JobClient {
 			//Retrieving the list of chunks
 			try {
 				System.out.println(messageHeader + "Retrieving the list of chunks ..."); 
-				ArrayList<ArrayList<String>> chunks = nm.readFileRequest(getInputFName());
+				ArrayList<ArrayList<String>> chunks = nm.readFileRequest(getInputFname());
 				setChunkList(chunks);
 				System.out.println(messageHeader + "Chunks retrieved !!\n");
 			} catch (Exception e) {
@@ -135,7 +135,7 @@ public class JobClient {
 			// In case of map requiring file in input
 			if (this.inputFName != null) {
 				// Retrieving the name of the chunk
-				chunk = getInputFName().split("\\.")[0] + SettingsManager.TAG_DATANODE + i + "." + getInputFName().split("\\.")[1];
+				chunk = getInputFname().split("\\.")[0] + SettingsManager.TAG_DATANODE + i + "." + getInputFname().split("\\.")[1];
 				// Retrieving the names of the machines which possess the chunk
 				ArrayList<String> machines = getChunkList().get(i); 
 				// Retrieving the server chosen to execute the map
@@ -153,7 +153,7 @@ public class JobClient {
 
 			// In case of map requiring no file in input
 			} else {
-				chunk = getOutputFName() + SettingsManager.TAG_DATANODE + i;
+				chunk = getOutputFname() + SettingsManager.TAG_DATANODE + i;
 				String machine = null;
 				try {
 					machine = jm.submitMap(jobId, i, null);
@@ -198,14 +198,14 @@ public class JobClient {
 
 		// Notify NameNode that all chunk have been written
 		try {
-			nm.allChunkWritten(getOutputFName());
+			nm.allChunkWritten(getOutputFname());
      		} catch (Exception e) {
 			e.printStackTrace();
 		}
 
 		// Retrieving map results
 		try {
-			HdfsClient.HdfsRead(getOutputFName() , getOutputFName());
+			HdfsClient.HdfsRead(getOutputFname() , getOutputFname());
 		} catch (Exception e) {
 			e.printStackTrace();
 		} 
@@ -235,7 +235,7 @@ public class JobClient {
 		this.inputFName = fname;
 	}
 
-	public String getInputFName() {
+	public String getInputFname() {
 		return this.inputFName;
 	}
 
@@ -251,7 +251,7 @@ public class JobClient {
 		this.outputFName = fname;
 	}
 
-	public String getOutputFName() {
+	public String getOutputFname() {
 		return this.outputFName;
 	}
 
@@ -287,5 +287,6 @@ public class JobClient {
 	public List<ArrayList<String>> getChunkList() {
 		return this.chunkList;
 	}
+
 }
 
