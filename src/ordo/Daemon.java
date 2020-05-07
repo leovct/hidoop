@@ -5,7 +5,6 @@ import java.rmi.RemoteException;
 
 import formats.Format;
 import map.Mapper;
-import map.Reducer;
 
 public interface Daemon extends Remote {
 

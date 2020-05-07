@@ -7,7 +7,6 @@ import java.rmi.server.UnicastRemoteObject;
 import config.SettingsManager;
 import formats.Format;
 import map.Mapper;
-import map.Reducer;
 
 public class DaemonImpl extends UnicastRemoteObject implements Daemon {
 	private static final long serialVersionUID = 1L;
