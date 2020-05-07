@@ -31,6 +31,7 @@ public class JobClient {
 			((filePath.contains("\\")) ? filePath.substring(filePath.lastIndexOf('\\')+1) : filePath));
 	}
 
+	// Constructor in case of map requiring file in input
 	public JobClient(Format.Type inputFormat, String inputFName) {
 		this.inputFormat = inputFormat;
 		this.inputFName = ((inputFName.contains("/")) ? inputFName.substring(inputFName.lastIndexOf('/')+1) : 
@@ -41,6 +42,7 @@ public class JobClient {
 		this.resReduceFName = inputFName + "-resf";
 	}
 	
+	// Constructor in case of map requiring no file in input
 	public JobClient(String name) {
 		this.inputFormat = null;
 		this.inputFName = null;
@@ -54,26 +56,25 @@ public class JobClient {
 
 		System.out.println(messageHeader + "Submit job ...");
 		
-		// Création des formats
-		//Format input = new LineFormat(getInputFName());
+		// Create formats
 		Format output = new KVFormat(getOutputFName());
 		Format resReduce = new KVFormat(getResReduceFName());
 
 		NameNode nm = null;
 		JobManager jm = null;
-		// Récupération du NameNode et JobManager
+		// Retrieving NameNode & JobManager
 		try {
-			System.out.println(messageHeader + "Recovering stub of NameNode ...");
+			System.out.println(messageHeader + "Retrieving stub of NameNode ...");
 			nm = (NameNode)Naming.lookup("//"+SettingsManager.getMasterNodeAddress()+":"+SettingsManager.PORT_NAMENODE+"/NameNode");
-			System.out.println(messageHeader + "Stub of NameNode recovered !!");
-			System.out.println(messageHeader + "Recovering stub of JobManager");
+			System.out.println(messageHeader + "Stub of NameNode retrieved !!");
+			System.out.println(messageHeader + "Retrieving stub of JobManager");
 			jm = (JobManager)Naming.lookup("//"+SettingsManager.getMasterNodeAddress()+":"+SettingsManager.PORT_NAMENODE+"/JobManager");
-			System.out.println(messageHeader + "Stub of JobManager recovered !!");
+			System.out.println(messageHeader + "Stub of JobManager retrieved !!");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 
-		//Initialisation côté JobManager
+		//Initialize JobManager
 		try {
 			System.out.println(messageHeader + "Adding Job on JobManager...");
 			long id = jm.addJob(mr, getInputFormat(), getInputFName());
@@ -84,8 +85,8 @@ public class JobClient {
 			e.printStackTrace();
 		}
 
-		// Récupération de la liste des démons
-		System.out.println(messageHeader + "Recovering the list of Daemons ...");
+		// Retrieving the list of daemons
+		System.out.println(messageHeader + "Retrieving the list of Daemons ...");
 		List<Daemon> demons = new ArrayList<Daemon>();
 		List<String> demonsName = new ArrayList<String>();
 		try {
@@ -95,57 +96,62 @@ public class JobClient {
 		}
 		for(String serverAddress : demonsName) {
 			try {
-				System.out.println(messageHeader + "Recovering stub of : //"+serverAddress+":"+SettingsManager.PORT_DAEMON+"/DaemonImpl" );
+				System.out.println(messageHeader + "Retrieving stub of : //"+serverAddress+":"+SettingsManager.PORT_DAEMON+"/DaemonImpl" );
 				demons.add((Daemon)Naming.lookup("//"+serverAddress+":"+SettingsManager.PORT_DAEMON+"/DaemonImpl"));
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
-		System.out.println(messageHeader + "Daemons recovered !!");
+		System.out.println(messageHeader + "Daemons retrieved !!");
 
+		// In case of map requiring file in input
 		if (this.inputFName != null) {
-			//Récupération de la liste des chunks
+			//Retrieving the list of chunks
 			try {
-				System.out.println(messageHeader + "Recovering the list of chunks ..."); 
+				System.out.println(messageHeader + "Retrieving the list of chunks ..."); 
 				ArrayList<ArrayList<String>> chunks = nm.readFileRequest(getInputFName());
 				setChunkList(chunks);
-				System.out.println(messageHeader + "Chunks recovered !!\n");
+				System.out.println(messageHeader + "Chunks retrieved !!\n");
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
 			
-			// Mise à jour du nombre de maps à effectuer
+			// Update the number of maps according to the number of chunks
 			setNbMaps(getChunkList().size());
+
+		// In case of map requiring no file in input
 		} else {
-			// Effectuer un map par démon (ex. dans le cas de QuasiMonteCarlo)
+			// Perform one map per demon (ex. in the case of QuasiMonteCarlo)
 			setNbMaps(demons.size());
 		}
 		
-		// Lancement des maps sur les démons
+		// Starting maps on daemons
 		System.out.println(messageHeader + "Starting maps ...");
 		for(int i = 0; i < getNbMaps(); i++) {			
 			String chunk;
 			Daemon d;
 			Format inputTmp, outputTmp;
+
+			// In case of map requiring file in input
 			if (this.inputFName != null) {
-				// On définit le nom du chunk
+				// Retrieving the name of the chunk
 				chunk = getInputFName().split("\\.")[0] + SettingsManager.TAG_DATANODE + i + "." + getInputFName().split("\\.")[1];
-				// On récupère le nom des machines qui possède le chunk
+				// Retrieving the names of the machines which possess the chunk
 				ArrayList<String> machines = getChunkList().get(i); 
-				//On récupère le serveur qui s'occupera du map
+				// Retrieving the server chosen to execute the map
 				String machine = null;
 				try {
 					machine = jm.submitMap(jobId, i, machines);
 				} catch (RemoteException e) {
 					e.printStackTrace();
 				}
-				// On récupère le numéro du démon sur lequel lancer le map
 				int numDaemon = demonsName.indexOf(machine);
-				// On récupère le bon démon dans la liste des démons
 				d = demons.get(numDaemon);
-				// On change le nom des Formats pour qu'ils correspondent aux fragments
+				// Creating the formats for the chunk
 				inputTmp = new LineFormat(SettingsManager.DATA_FOLDER + chunk);
 				outputTmp = new KVFormat(SettingsManager.DATA_FOLDER + chunk + "-map");
+
+			// In case of map requiring no file in input
 			} else {
 				chunk = getOutputFName() + SettingsManager.TAG_DATANODE + i;
 				String machine = null;
@@ -154,17 +160,13 @@ public class JobClient {
 				} catch (RemoteException e) {
 					e.printStackTrace();
 				}
-				// On récupère le numéro du démon sur lequel lancer le map
 				int numDaemon = demonsName.indexOf(machine);
-				// On récupère le bon démon dans la liste des démons
 				d = demons.get(numDaemon);
 				inputTmp = null;
 				outputTmp = new KVFormat(SettingsManager.DATA_FOLDER + chunk);
 			}
-			
-			// On change le nom des Formats pour qu'ils correspondent aux fragments
-			
-			// On appelle runMap sur le bon démon
+						
+			// Call the method to run a map on a dameon
 			try {
 				d.runMap(mr, inputTmp, outputTmp, jobId);
 			} catch (RemoteException e) {
@@ -174,7 +176,7 @@ public class JobClient {
 		
 		System.out.println(messageHeader + "All maps started !!\n");
 
-		// Puis on attends que tous les démons aient finis leur travail
+		// Waiting for all the maps to be done
 		System.out.println(messageHeader + "Waiting for the callback of Daemons ...");
 		try {
 			int maps = jm.nbMapDone(jobId);
@@ -194,21 +196,21 @@ public class JobClient {
 		}
 		System.out.println(messageHeader + "Callbacks received !!\n");
 
-		// Notifier le NameNode que tous les chunks ont été écrits
+		// Notify NameNode that all chunk have been written
 		try {
 			nm.allChunkWritten(getOutputFName());
      		} catch (Exception e) {
 			e.printStackTrace();
 		}
 
-		// On appelle hdfs.read pour récupérer tous les résultats des maps
+		// Retrieving map results
 		try {
 			HdfsClient.HdfsRead(getOutputFName() , getOutputFName());
 		} catch (Exception e) {
 			e.printStackTrace();
 		} 
 
-		// On peut alors lancer le reduce
+		// Starting reduce
 		output.open(Format.OpenMode.R);
 		resReduce.open(Format.OpenMode.W);
 		System.out.println(messageHeader + "Starting reduce ...");

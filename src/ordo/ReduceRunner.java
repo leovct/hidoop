@@ -10,12 +10,11 @@ import java.io.File;
 
 public class ReduceRunner extends Thread {
 
-	Reducer r; //map à lancer
-	Format reader, writer; //les formats de lecture et d'écriture
+	Reducer r;
+	Format reader, writer; 
 	long jobId;
 	String serverAddress;
-	private static String messageHeader = ">>> [DAEMON] ";
-	//private static String errorHeader = ">>> [ERROR] ";
+	private static String messageHeader = ">>> [REDUCERUNNER] ";
 
 	public ReduceRunner(Reducer r, Format reader, Format writer, long jobId, String serverAddress){
 		this.r = r;
@@ -26,25 +25,22 @@ public class ReduceRunner extends Thread {
 	}
 
 	public void run() {
+		// Open the file to read/write, execute the map task and close files
 		if (reader != null) {
 			System.out.println(messageHeader + "Starting map on file " + reader.getFname() + " ...");
-			// Ouverture du fichier contenant le fragment sur lequel exécuter le map
 			reader.open(Format.OpenMode.R);
 		} else {
 			System.out.println(messageHeader + "Starting map ...");
 		}
 		
-		//Ouverture du fichier dans lequel les résultats du map doivent être écrits
 		writer.open(Format.OpenMode.W);
-		//Lancement du map sur le fragment
 		r.reduce(reader, writer);
-		//Fermeture des fichiers en lecture et écriture
 		if (this.reader != null) {
 			reader.close();
 		}
 		writer.close();
 
-		// Préparation des paramètres
+		// Preparing the parameter to send to NameNode/JobManager
 		String chunkName = writer.getFname();
 		long chunkSize = new File(chunkName).length();
 		String[] chunkNameSplit = chunkName.split("/");
@@ -58,7 +54,7 @@ public class ReduceRunner extends Thread {
 		}
 		
 
-		//Notification au NameNode
+		//Notify NameNode
 		try {	
 			NameNode nameNode = (NameNode) Naming.lookup("//"+SettingsManager.getMasterNodeAddress()+":"+SettingsManager.PORT_NAMENODE+"/NameNode");
 			if (this.reader != null) {
@@ -70,7 +66,7 @@ public class ReduceRunner extends Thread {
 			e.printStackTrace();
 		}
 		
-		//Notification du JobManager
+		//Notify JobManager
 		try {	
 			JobManager jobManager = (JobManager) Naming.lookup("//"+SettingsManager.getMasterNodeAddress()+":"+SettingsManager.PORT_NAMENODE+"/JobManager");
 			jobManager.notifyMapDone(jobId, chunkNumber, serverAddress);

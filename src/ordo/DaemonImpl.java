@@ -22,13 +22,11 @@ public class DaemonImpl extends UnicastRemoteObject implements Daemon {
 
 
 	public void runMap (Mapper m, Format reader, Format writer, long jobId) throws RemoteException {
-		// On créé un thread pour le map
 		MapRunner mapRunner = new MapRunner(m, reader, writer, jobId, getServerAddress());
 		mapRunner.start();    
 	}
 
 	public void runReduce (Reducer r, Format reader, Format writer, long jobId) throws RemoteException {
-		// On créé un thread pour le map
 		ReduceRunner reduceRunner = new ReduceRunner(r, reader, writer, jobId, getServerAddress());
 		reduceRunner.start();    
 	}
