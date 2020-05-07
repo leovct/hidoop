@@ -26,11 +26,6 @@ public class DaemonImpl extends UnicastRemoteObject implements Daemon {
 		mapRunner.start();    
 	}
 
-	public void runReduce (Reducer r, Format reader, Format writer, long jobId) throws RemoteException {
-		ReduceRunner reduceRunner = new ReduceRunner(r, reader, writer, jobId, getServerAddress());
-		reduceRunner.start();    
-	}
-
 	/**
 	 * Getter for serverAddress.
 	 * @return
