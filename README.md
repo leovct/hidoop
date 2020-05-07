@@ -182,7 +182,7 @@ java -classpath bin application.WordCount_MapReduce <filename>
 > `java -classpath bin hdfs.HdfsClient write line data/filesample.txt 1`  
 > Then, execute the WordCount application by specifying the name of the file (without the path, HDFS is a flat hierarchy):  
 > `java -classpath bin application.WordCount_MapReduce filesample.txt`  
-> Result of process is written in _filesample.txt-resf_ file (KV format) in project's root folder
+> Result of process is written in _resf-filesample.txt_ file (KV format) in project's root folder
 
 *Note: It is possible to compare the performances of MapReduce applications with their iterative versions, also present in the package.  
 Keep in mind that the time saving will only be noticeable on very large files. Indeed, the MapReduce process is quite expensive and is only useful for large files to be processed.  
