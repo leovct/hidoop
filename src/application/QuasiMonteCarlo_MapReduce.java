@@ -11,7 +11,7 @@ public class QuasiMonteCarlo_MapReduce implements MapReduce {
 	private static final long serialVersionUID = 1L;
 	private static long insideCircle;
 	private static long generated;
-	private static long pointsGeneratedPerMap = 1_000_000_000L;
+	private static long pointsGeneratedPerMap = 1_000_000L;
 	
 	@Override
 	public void map(FormatReader reader, FormatWriter writer) {

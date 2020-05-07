@@ -11,7 +11,7 @@ import java.io.OutputStreamWriter;
  */
 public class QuasiMonteCarlo_Iterative {
 
-	private static long pointsGeneratedPerMap = 1000000;
+	private static long pointsGeneratedPerMap = 1_000_000L;
 	private static BufferedWriter writer;
 	
 	public static void main(String[] args) {
