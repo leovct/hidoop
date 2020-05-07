@@ -16,10 +16,8 @@ public interface DataNode extends Remote {
 	 * to write a chunk on the server.
 	 * @param command 
 	 * @param fileName 
-	 * @param fileExtension 
 	 * @param chunkNumber 
-	 * 
 	 * @return port number to send data on
 	 */
-	public int processChunk(Command command, String fileName, String fileExtension, int chunkNumber) throws RemoteException;
+	public int processChunk(Command command, String fileName, int chunkNumber) throws RemoteException;
 }
