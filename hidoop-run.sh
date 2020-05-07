@@ -1,6 +1,6 @@
 #!/bin/bash
 display_usage() {
-	echo -e "\033[1musage: ./hidoop-run.sh \033[1;31m<serversloginID>\033[0m [optional:dataPathOnServers]" 
+	echo -e "\033[1musage: ./hidoop-run.sh \033[1;31m<serversloginID>\033[0m" 
 }
 
 # check whether user had supplied -h or --help, if yes display usage 
@@ -24,6 +24,7 @@ else
 	DATA_FOLDER=$2
 fi
 
+chmod u+x config/*.sh
 id=$1
 config/kill.sh $id
 config/exec.sh $id $DATA_FOLDER

@@ -1,64 +1,81 @@
 package ordo;
 
-import java.rmi.RemoteException;
 import java.rmi.Naming;
 import formats.Format;
 import map.Mapper;
 import hdfs.NameNode;
-import config.Project;
+import config.SettingsManager;
 import java.io.File;
 
 
 public class MapRunner extends Thread {
 
-	Mapper m; //map à lancer
-	Format reader, writer; //les formats de lecture et d'écriture
-	Callback cb;
+	Mapper m;
+	Format reader, writer; 
+	long jobId;
 	String serverAddress;
-	private static String messageHeader = ">>> [DAEMON] ";
-	private static String errorHeader = ">>> [ERROR] ";
+	private static String messageHeader = ">>> [MAPRUNNER] ";
 
-	public MapRunner(Mapper m, Format reader, Format writer, Callback cb, String serverAddress){
+
+	public MapRunner(Mapper m, Format reader, Format writer, long jobId, String serverAddress){
 		this.m = m;
 		this.reader = reader;
 		this.writer = writer;
-		this.cb = cb;
+		this.jobId = jobId;
 		this.serverAddress = serverAddress;
 	}
 
 	public void run() {
-		System.out.println(messageHeader + "Lancement du map sur le fichier " + reader.getFname());
-		// Ouverture du fichier contenant le fragment sur lequel exécuter le map
-		reader.open(Format.OpenMode.R);
-		//Ouverture du fichier dans lequel les résultats du map doivent être écrits
+		// Open the file to read/write, execute the map task and close files
+		if (reader != null) {
+			System.out.println(messageHeader + "Starting map on file " + reader.getFname() + " ...");
+			reader.open(Format.OpenMode.R);
+		} else {
+			System.out.println(messageHeader + "Starting map ...");
+		}
+		
 		writer.open(Format.OpenMode.W);
-		//Lancement du map sur le fragment
 		m.map(reader, writer);
-		//Fermeture des fichiers en lecture et écriture
-		reader.close();
+		if (this.reader != null) {
+			reader.close();
+		}
 		writer.close();
 
-		//Notification au NameNode
+		// Preparing the parameter to send to NameNode/JobManager
+		String chunkName = writer.getFname();
+		long chunkSize = new File(chunkName).length();
+		String[] chunkNameSplit = chunkName.split("/");
+		String chunkNameWOPath = chunkNameSplit[chunkNameSplit.length-1];
+		String filename = "";
+		if (chunkNameWOPath.contains(SettingsManager.TAG_DATANODE)) {
+			filename = (chunkNameWOPath.split(SettingsManager.TAG_DATANODE)[0]).split(SettingsManager.TAG_MAP)[1];
+		} else {
+			filename = chunkNameWOPath.split(SettingsManager.TAG_MAP)[1];
+		}
+		
+		int chunkNumber = Integer.parseInt(chunkNameWOPath.split(SettingsManager.TAG_DATANODE)[1]);
+		
+
+		//Notify NameNode
 		try {	
-			String chunkName = writer.getFname();
-			long chunkSize = new File(chunkName).length();
-			String[] chunkNameSplit = chunkName.split("/");
-			String chunkNameWOPath = chunkNameSplit[chunkNameSplit.length-1];
-			String filename = chunkNameWOPath.split("-")[0];
-			int chunkNumber = Integer.parseInt(((chunkNameWOPath.split("-")[1]).split("\\.")[0]).split("(?<=\\D)(?=\\d)")[1]);
-			NameNode nameNode = (NameNode) Naming.lookup("//"+Project.NAMENODE+":"+Project.PORT_NAMENODE+"/NameNode");
-			nameNode.chunkWritten(filename+".txt-map", -1, (int)chunkSize, 1, chunkNumber, serverAddress);
+			NameNode nameNode = (NameNode) Naming.lookup("//"+SettingsManager.getMasterNodeAddress()+":"+SettingsManager.PORT_NAMENODE+"/NameNode");
+			nameNode.chunkWritten(SettingsManager.TAG_MAP + filename, -1, (int)chunkSize, 1, chunkNumber, serverAddress);		
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		
-		//Envoie du callback
-		try {
-			cb.incNbMapDone();   
-		} catch (RemoteException e) {  
+		//Notify JobManager
+		try {	
+			JobManager jobManager = (JobManager) Naming.lookup("//"+SettingsManager.getMasterNodeAddress()+":"+SettingsManager.PORT_NAMENODE+"/JobManager");
+			jobManager.notifyMapDone(jobId, chunkNumber, serverAddress);
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 
-		System.out.println(messageHeader + "Map sur le fichier " + reader.getFname() + " terminé !");
+		if (this.reader != null) {
+			System.out.println(messageHeader + "Map on file " + reader.getFname() + " done !");
+		} else {
+			System.out.println(messageHeader + "Map done !");
+		}
 	}
 }

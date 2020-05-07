@@ -12,8 +12,8 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 
-import config.Project;
-import config.Project.Command;
+import config.SettingsManager;
+import config.SettingsManager.Command;
 import formats.Format;
 import formats.KV;
 import formats.KVFormat;
@@ -31,10 +31,6 @@ public class HdfsClient {
 	 */
 	private static String messageHeader = ">>> [HDFSCLIENT] ";
 	private static String errorHeader = ">>> [ERROR] ";
-	/*private static final String messageHeaderError = errorHeader + "Message header received"
-			+ "is incorrect or non-existent\nExpected :\n - CMD_READ Command (Commande object)"
-			+ "\n - File name (String object)\n - File extension (String object)"
-			+ "\n - Chunk Number (Integer object)";*/
 	private static final String readFileError = errorHeader + "Error occured while"
 			+ " reading file on HDFS";
 	private static final String nameNodeNotBoundError = errorHeader + "NameNode is not "
@@ -45,6 +41,8 @@ public class HdfsClient {
 			+ "does not respond";
 	private static final String NameNodeFileError = errorHeader + "Specified file "
 			+ "could not be retrieved from NameNode";
+	private static final String replicationFactorError = errorHeader + "<replicationfactor> "
+			+ "must be a strictly positive integer";
 
 	/**
 	 * Buffer size constant
@@ -64,12 +62,10 @@ public class HdfsClient {
 		NameNode nameNode;
 		DataNode dataNode;
 		ArrayList<String> nameNodeResponse;
-		String fileName = ((localFSSourceFname.contains(".")) //Separates file name and file extension
-				? localFSSourceFname.substring(0,localFSSourceFname.lastIndexOf('.')) : localFSSourceFname),
-				fileExtension = localFSSourceFname.substring(fileName.length(), localFSSourceFname.length());
-		fileName = ((fileName.contains("/")) //Removes path from file name
-				? fileName.substring(fileName.lastIndexOf('/')+1) : 
-					((fileName.contains("\\")) ? fileName.substring(fileName.lastIndexOf('\\')+1) : fileName));
+		String fileName = ((localFSSourceFname.contains("/")) //Removes path from file name
+				? localFSSourceFname.substring(localFSSourceFname.lastIndexOf('/')+1) : 
+					((localFSSourceFname.contains("\\")) ? 
+							localFSSourceFname.substring(localFSSourceFname.lastIndexOf('\\')+1) : localFSSourceFname));
 		Format input;
 		KV structure;
 		Socket socket;
@@ -81,7 +77,7 @@ public class HdfsClient {
 		System.out.println(messageHeader
 				+ "%WRITE% Processing file " + localFSSourceFname + "...");
 		try { //Connection to NameNode
-			nameNode = (NameNode) Naming.lookup("//"+Project.NAMENODE+":"+Project.PORT_NAMENODE+"/NameNode"); 
+			nameNode = (NameNode) Naming.lookup("//"+SettingsManager.getMasterNodeAddress()+":"+SettingsManager.PORT_NAMENODE+"/NameNode"); 
 		} catch (NotBoundException e) {
 			System.err.println(nameNodeNotBoundError);
 			return;
@@ -97,9 +93,9 @@ public class HdfsClient {
 		while ((structure = input.read()) != null) {
 			try {
 				nameNodeResponse = nameNode.writeChunkRequest(repFactor);
-				dataNode = (DataNode) Naming.lookup("//"+nameNodeResponse.get(0)+":"+Project.PORT_DATANODE+"/DataNode");
+				dataNode = (DataNode) Naming.lookup("//"+nameNodeResponse.get(0)+":"+SettingsManager.PORT_DATANODE+"/DataNode");
 				socket = new Socket(nameNodeResponse.get(0), 
-						dataNode.processChunk(Command.CMD_WRITE, fileName, fileExtension, chunkCounter));
+						dataNode.processChunk(Command.CMD_WRITE, fileName, chunkCounter));
 				socketOutputStream = new ObjectOutputStream(socket.getOutputStream());
 				socketOutputStream.writeObject(nameNodeResponse.size());
 				for (int i = 1 ; i < nameNodeResponse.size() ; i++) {
@@ -108,19 +104,19 @@ public class HdfsClient {
 				buf = structure.writeSyntax(fmt);
 				socketOutputStream.write(buf, 0, buf.length);
 				index = input.getIndex();
-				while ((input.getIndex() - index <= Project.CHUNK_SIZE) && (structure = input.read())!= null) { 
+				while ((input.getIndex() - index <= SettingsManager.CHUNK_SIZE) && (structure = input.read())!= null) { 
 					buf = structure.writeSyntax(fmt);
 					socketOutputStream.write(buf, 0, buf.length);
 				}
 				socketOutputStream.close();
 				socket.close();
 				for (String server : nameNodeResponse) {
-					nameNode.chunkWritten(fileName+fileExtension, -1, Project.CHUNK_SIZE, repFactor, 
+					nameNode.chunkWritten(fileName, -1, SettingsManager.CHUNK_SIZE, repFactor, 
 							chunkCounter, server);
 				}
-				if (structure != null && structure.v.length() > Project.CHUNK_SIZE) 
+				if (structure != null && structure.v.length() > SettingsManager.CHUNK_SIZE) 
 					System.err.println(errorHeader + "Input file contains "
-							+ "a structure value whose size is bigger than chunk size ("+Project.CHUNK_SIZE+")");
+							+ "a structure value whose size is bigger than chunk size ("+SettingsManager.CHUNK_SIZE+")");
 				System.out.println(messageHeader + "Chunk n°" + chunkCounter + " sent on server "
 						+ nameNodeResponse.get(0));
 				chunkCounter++;
@@ -131,12 +127,13 @@ public class HdfsClient {
 		}
 		input.close();
 		try {
-			nameNode.allChunkWritten(fileName+fileExtension);
+			nameNode.allChunkWritten(fileName);
 		} catch (RemoteException e) {
 			e.printStackTrace();
 			return;
 		}
-		System.out.println(messageHeader + "File " + fileName+fileExtension
+		//new File(localFSSourceFname).delete(); //Deletes local file once process completed
+		System.out.println(messageHeader + "File " + fileName
 				+ " : process completed (" + chunkCounter + " chunks)");
 	}
 
@@ -151,25 +148,23 @@ public class HdfsClient {
 	public static void HdfsRead(String hdfsFname, String localFSDestFname) {
 		NameNode nameNode;
 		DataNode dataNode;
-		ArrayList<String> nameNodeResponse;
-		String fileName = ((hdfsFname.contains(".")) //Separates file name and file extension
-				? hdfsFname.substring(0,hdfsFname.lastIndexOf('.')) : hdfsFname),
-				fileExtension = hdfsFname.substring(fileName.length(), hdfsFname.length());
-		fileName = ((fileName.contains("/")) //Removes path from file name
-				? fileName.substring(fileName.lastIndexOf('/')+1) : 
-					((fileName.contains("\\")) ? fileName.substring(fileName.lastIndexOf('\\')+1) : fileName));
+		ArrayList<ArrayList<String>> nameNodeResponse;
+		String fileName = ((hdfsFname.contains("/")) //Removes path from file name
+				? hdfsFname.substring(hdfsFname.lastIndexOf('/')+1) : 
+					((hdfsFname.contains("\\")) ? hdfsFname.substring(hdfsFname.lastIndexOf('\\')+1) : hdfsFname));
 		Socket socket;
 		ObjectInputStream socketInputStream;
 		BufferedOutputStream bos;
 		Object objectReceived;
-		int nbRead, chunkNumber, chunkCounter = 0;
+		int nbRead, chunkNumber, chunkHandle = 0, chunkCounter = 0;
 		byte[] buf = new byte[bufferSize];
+		boolean chunkRead = false;
 
 		System.out.println(messageHeader
-				+ "%READ% Processing file " + fileName+fileExtension + "...");
+				+ "%READ% Processing file " + fileName + "...");
 		try { //Connection to NameNode
-			nameNode = (NameNode) Naming.lookup("//"+Project.NAMENODE+":"+Project.PORT_NAMENODE+"/NameNode");
-			nameNodeResponse = nameNode.readFileRequest(fileName+fileExtension);
+			nameNode = (NameNode) Naming.lookup("//"+SettingsManager.getMasterNodeAddress()+":"+SettingsManager.PORT_NAMENODE+"/NameNode");
+			nameNodeResponse = nameNode.readFileRequest(fileName);
 			if (nameNodeResponse == null) {
 				System.err.println(NameNodeFileError);
 				return;
@@ -184,38 +179,47 @@ public class HdfsClient {
 			e.printStackTrace();
 			return;
 		}
-		for (String server : nameNodeResponse) {
-			try {
-				dataNode = (DataNode) Naming.lookup("//"+server+":"+Project.PORT_DATANODE+"/DataNode");
-				socket = new Socket(server, dataNode.processChunk(Command.CMD_READ, fileName, fileExtension, chunkCounter));
-				socketInputStream = new ObjectInputStream(socket.getInputStream());
-				if ((objectReceived = socketInputStream.readObject()) instanceof Command 
-						&& (Command) objectReceived == Command.CMD_READ
-						&& (objectReceived = socketInputStream.readObject()) instanceof String 
-						&& ((String) objectReceived).equals(fileName)
-						&& (objectReceived = socketInputStream.readObject()) instanceof String 
-						&& ((String) objectReceived).equals(fileExtension)
-						&& (objectReceived = socketInputStream.readObject()) instanceof Integer) {
-					chunkNumber = (int) objectReceived;
-					bos = new BufferedOutputStream(new FileOutputStream(
-							localFSDestFname, (chunkNumber == 0) ? false : true), bufferSize);
-					while((nbRead = socketInputStream.read(buf)) != -1) {
-						bos.write(buf, 0, nbRead);
+		for (ArrayList<String> chunkHandles : nameNodeResponse) {
+			chunkHandle = 0;
+			while (!chunkRead && chunkHandle < chunkHandles.size()) {
+				try {
+					dataNode = (DataNode) Naming.lookup("//"+chunkHandles.get(chunkHandle)+":"+SettingsManager.PORT_DATANODE+"/DataNode");
+					socket = new Socket(chunkHandles.get(chunkHandle), dataNode.processChunk(Command.CMD_READ, fileName, chunkCounter));
+					socketInputStream = new ObjectInputStream(socket.getInputStream());
+					if ((objectReceived = socketInputStream.readObject()) instanceof Command 
+							&& (Command) objectReceived == Command.CMD_READ
+							&& (objectReceived = socketInputStream.readObject()) instanceof String 
+							&& ((String) objectReceived).equals(fileName)
+							&& (objectReceived = socketInputStream.readObject()) instanceof Integer) {
+						chunkNumber = (int) objectReceived;
+						bos = new BufferedOutputStream(new FileOutputStream(
+								localFSDestFname, (chunkNumber == 0) ? false : true), bufferSize);
+						while((nbRead = socketInputStream.read(buf)) != -1) {
+							bos.write(buf, 0, nbRead);
+						}
+						bos.close();
+						chunkRead = true;
+						System.out.println(messageHeader + "Received chunk number "
+								+chunkNumber);
+					} else {
+						System.err.println(errorHeader + "Could not retrieve chunk from " + chunkHandles.get(chunkHandle)
+						+ ", trying to retrieve a copy from another server...");
 					}
-					bos.close();									
-					System.out.println(messageHeader + "Received chunk number "
-							+chunkNumber);
-				} else {
-					System.err.println(readFileError);
-					(new File(localFSDestFname)).delete();
+					socketInputStream.close();
+					socket.close();
+				} catch (Exception e) {
+					System.err.println(errorHeader + "A problem occured while trying to retrieve chunk from " 
+							+ chunkHandles.get(chunkHandle) + ", trying to retrieve a copy from another server...");
 				}
-				socketInputStream.close();
-				socket.close();
-			} catch (Exception e) {
+				chunkHandle++;
+			}
+			if (!chunkRead) {
 				System.err.println(readFileError);
-				e.printStackTrace();
+				(new File(localFSDestFname)).delete();
+				return;
 			}
 			chunkCounter++;
+			chunkRead = false;
 		}
 		System.out.println(messageHeader + "End of chunks reception "
 				+ "for file " + fileName + ", result file writen as " + localFSDestFname);
@@ -233,18 +237,15 @@ public class HdfsClient {
 		DataNode dataNode;
 		ArrayList<String> nameNodeResponse;
 		int chunkCounter = 0;
-		String fileName = ((hdfsFname.contains(".")) 
-				? hdfsFname.substring(0,hdfsFname.lastIndexOf('.')) : hdfsFname),
-				fileExtension = hdfsFname.substring(fileName.length(), hdfsFname.length());
-		fileName = ((fileName.contains("/")) //Removes path from file name
-				? fileName.substring(fileName.lastIndexOf('/')+1) : 
-					((fileName.contains("\\")) ? fileName.substring(fileName.lastIndexOf('\\')+1) : fileName));
+		String fileName = ((hdfsFname.contains("/")) //Removes path from file name
+				? hdfsFname.substring(hdfsFname.lastIndexOf('/')+1) : 
+					((hdfsFname.contains("\\")) ? hdfsFname.substring(hdfsFname.lastIndexOf('\\')+1) : hdfsFname));
 
 		System.out.println(messageHeader
-				+ "%DELETE% Deleting file " + fileName+fileExtension + "...");
+				+ "%DELETE% Deleting file " + fileName + "...");
 		try { //Connection to NameNode
-			nameNode = (NameNode) Naming.lookup("//"+Project.NAMENODE+":"+Project.PORT_NAMENODE+"/NameNode");
-			nameNodeResponse = nameNode.deleteFileRequest(fileName+fileExtension);
+			nameNode = (NameNode) Naming.lookup("//"+SettingsManager.getMasterNodeAddress()+":"+SettingsManager.PORT_NAMENODE+"/NameNode");
+			nameNodeResponse = nameNode.deleteFileRequest(fileName);
 			if (nameNodeResponse == null) {
 				System.err.println(NameNodeFileError);
 				return;
@@ -261,15 +262,15 @@ public class HdfsClient {
 		}
 		for (String server : nameNodeResponse) {
 			try {
-				dataNode = (DataNode) Naming.lookup("//"+server+":"+Project.PORT_DATANODE+"/DataNode");
-				dataNode.processChunk(Command.CMD_DELETE, fileName, fileExtension, chunkCounter);
+				dataNode = (DataNode) Naming.lookup("//"+server+":"+SettingsManager.PORT_DATANODE+"/DataNode");
+				dataNode.processChunk(Command.CMD_DELETE, fileName, chunkCounter);
 			} catch (Exception e) {
 				System.out.println(dataNodeNotBoundError + " : " + server);
 			}
 			chunkCounter++;
 		}
 		System.out.println(messageHeader + "Delete command was sent to servers "
-				+ "for file " + fileName+fileExtension);
+				+ "for file " + fileName);
 	}
 
 	/**
@@ -288,7 +289,7 @@ public class HdfsClient {
 	 */
 	public static boolean notifyNameNode(String fileName, int fileSize, int chunkSize, int replicationFactor, int chunkNumber, String server) {
 		try { //Connection to NameNode
-			NameNode nameNode = (NameNode) Naming.lookup("//"+Project.NAMENODE+":"+Project.PORT_NAMENODE+"/NameNode");
+			NameNode nameNode = (NameNode) Naming.lookup("//"+SettingsManager.getMasterNodeAddress()+":"+SettingsManager.PORT_NAMENODE+"/NameNode");
 			nameNode.chunkWritten(fileName, fileSize, chunkSize, replicationFactor, chunkNumber, server);
 		} catch (NotBoundException e) {
 			System.err.println(nameNodeNotBoundError);
@@ -323,7 +324,7 @@ public class HdfsClient {
 	 */
 	private static void printUsage() {
 		System.out.println(messageHeader + "Incorrect parameters\nUsage :"
-				+ "\njava HdfsClient write <line|kv> <file>"
+				+ "\njava HdfsClient write <line|kv> <file> <replicationfactor>"
 				+ "\njava HdfsClient read <file> <destfile>"
 				+ "\njava HdfsClient delete <file>");
 	}
@@ -331,49 +332,56 @@ public class HdfsClient {
 	/**
 	 * Main.
 	 * Usage :
-	 * java HdfsClient write <line|kv> <file>
+	 * java HdfsClient write <line|kv> <file> <replicationfactor>
 	 * java HdfsClient read <file> <destfile>
 	 * java HdfsClient delete <file>
 	 * 
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		try {
-			if (args.length < 2 || args.length > 3) {
+		if (args.length > 1 && args.length < 5) {
+			switch (args[0]) {
+			case "write":
+				if (args.length > 2) {
+					int replicationFactor = 1;
+					if (args.length > 3) {
+						try {
+							if (!((replicationFactor = Integer.parseInt(args[3])) > 0)) {
+								System.out.println(replicationFactorError);
+								printUsage();
+								return;
+							}
+						} catch (NumberFormatException e) {
+							System.out.println(replicationFactorError);
+							printUsage();
+							return;
+						}
+					}
+					if ((new File(args[2])).exists()) {
+						switch (args[1]) {
+						case "line":
+							HdfsWrite(Format.Type.LINE, args[2], replicationFactor);
+							break;
+						case "kv":
+							HdfsWrite(Format.Type.KV, args[2], replicationFactor);
+							break;
+						default:
+							printUsage();
+						}
+					} else System.err.println(errorHeader + "File "+args[2]+" could not be found");
+				} else printUsage();
+				break;
+			case "read":
+				if (args.length != 3) printUsage();
+				else HdfsRead(args[1], args[2]);
+				break;
+			case "delete":
+				if (args.length != 2) printUsage();
+				else HdfsDelete(args[1]);
+				break;
+			default:
 				printUsage();
-			} else {
-				switch (args[0]) {
-				case "write":
-					if (args.length < 3) {
-						printUsage();
-					}
-					else if (args[1].equals("line"))
-						if (!(new File(args[2]).exists())) {
-							System.err.println(errorHeader + "File "+args[2]+" could not be found");
-						} else HdfsWrite(Format.Type.LINE, args[2], 2);
-					else if (args[1].equals("kv"))
-						if (!(new File(args[2]).exists())) {
-							System.err.println(errorHeader + "File "+args[2]+" could not be found");
-						} else HdfsWrite(Format.Type.KV, args[2], 2);
-					else {
-						printUsage();
-					}
-					break;
-				case "read":
-					if (args.length < 3) {
-						printUsage();
-					}
-					HdfsRead(args[1], args[2]);
-					break;
-				case "delete":
-					HdfsDelete(args[1]);
-					break;
-				default:
-					printUsage();
-				}
 			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		} else printUsage();
 	}
 }

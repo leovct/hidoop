@@ -1,6 +1,6 @@
 #!/bin/bash
 display_usage() {  
-	echo -e "usage : /config/clean.sh <serversloginID> [dataPathOnServers]" 
+	echo -e "usage : /config/clean.sh <serversloginID>" 
 	}
 
 # check whether user had supplied -h or --help, if yes display usage 
@@ -25,9 +25,9 @@ else
 fi 
 
 id=$1
-input=$PWD/config/servers
+input=$PWD/config/servers.config
 i=1
-nbrDeploy=$(< config/servers wc -l)
+nbrDeploy=$(< $input wc -l)
 while IFS= read -r line
 do
 	#Delete all files on server

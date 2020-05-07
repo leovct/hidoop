@@ -15,7 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
 
-public class Count {
+public class WordCount_Iterative {
 
 	public static void main(String[] args) {
 

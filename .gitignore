@@ -1,18 +1,14 @@
-# ignore everything in the root except the "src" directory
-#!src/
-
-# ignore everything in the "src" directory, except:
-#!src/hdfs/
-
-# ignore .class and .txt files
-*.class
-*.txt
-
-# ignore specific files
+# ignore IDE files
 .settings
 .project*
 .classpath*
-*namenode-data
+
+# ignore local project files
+bin
 doc
+config/*.config
+*.txt
+*-map
+*-resf
 *.pdf
 *.docx

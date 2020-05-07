@@ -1,6 +1,6 @@
 #!/bin/bash
 display_usage() {  
-	echo -e "usage : /config/deploy.sh <serversloginID> [dataPathOnServers]" 
+	echo -e "usage : /config/deploy.sh <serversloginID>" 
 }
 
 # check whether user had supplied -h or --help, if yes display usage 
@@ -26,10 +26,12 @@ fi
 
 id=$1
 rm */*/*.class
+[ -d "bin" ] || mkdir bin
 javac -d bin */*/*.java
-input=config/servers
+cp config/servers.config bin/config/servers.config
+input=config/servers.config
 i=1
-nbrDeploy=$(< config/servers wc -l)
+nbrDeploy=$(< $input wc -l)
 while IFS= read -r line
 do
 	# copy compiled .class files on server

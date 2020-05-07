@@ -19,12 +19,26 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.Random;
 
-import config.Project;
-import config.Project.Command;
+import config.SettingsManager;
+import config.SettingsManager.Command;
 
 public class DataNodeImpl extends UnicastRemoteObject implements DataNode {
+	/**
+	 * Constants.
+	 */
 	private static final long serialVersionUID = 1L;
-
+	private static final int bufferSize = 4096;
+	private static String messageHeader = ">>> [DATANODE] ";
+	private static String errorHeader = ">>> [ERROR] ";
+	private static final String receivedMessageHeaderError = errorHeader + "Message header "
+			+ "is incorrect or non-existent\nExpected :\n - Command type (Commande object)"
+			+ "\n - File name (String object)"
+			+ "\n - Chunk Number (Integer object)";
+	private static final String chunkNotFoundError = errorHeader + "Couldn't find "
+			+ "chunks on this server for file ";
+	private static final String nameNodeNotBoundError = errorHeader + "NameNode is not "
+			+ "bound in registry, leaving process";
+	
 	/**
 	 * Master NameNode.
 	 */
@@ -36,22 +50,6 @@ public class DataNodeImpl extends UnicastRemoteObject implements DataNode {
 	private String serverAddress;
 
 	/**
-	 * Constants.
-	 */
-	private static final int bufferSize = 100;
-	private static String tagDataNode = "-serverchunk";
-	private static String messageHeader = ">>> [DATANODE] ";
-	private static String errorHeader = ">>> [ERROR] ";
-	private static final String receivedMessageHeaderError = errorHeader + "Message header "
-			+ "is incorrect or non-existent\nExpected :\n - Command type (Commande object)"
-			+ "\n - File name (String object)\n - File extension (String object)"
-			+ "\n - Chunk Number (Integer object)";
-	private static final String chunkNotFoundError = errorHeader + "Couldn't find "
-			+ "chunks on this server for file ";
-	private static final String nameNodeNotBoundError = errorHeader + "NameNode is not "
-			+ "bound in registry, leaving process";
-
-	/**
 	 * Runnable class performing operations
 	 * when NameNode receives a command
 	 * (Nested class)
@@ -59,7 +57,7 @@ public class DataNodeImpl extends UnicastRemoteObject implements DataNode {
 	class TaskExecutor implements Runnable {
 		private int port;
 		private Command command;
-		private String fileName, fileExtension;
+		private String fileName;
 		private int chunkNumber;
 		private ServerSocket serverSocket;
 
@@ -68,14 +66,12 @@ public class DataNodeImpl extends UnicastRemoteObject implements DataNode {
 		 * @param port
 		 * @param command
 		 * @param fileName
-		 * @param fileExtension
 		 * @param chunkNumber
 		 */
-		public TaskExecutor(int port, Command command, String fileName, String fileExtension, int chunkNumber) {
+		public TaskExecutor(int port, Command command, String fileName, int chunkNumber) {
 			this.command = command;
 			this.port = port;
 			this.fileName = fileName;
-			this.fileExtension = fileExtension;
 			this.chunkNumber = chunkNumber;
 			try {
 				this.serverSocket = new ServerSocket(this.port);
@@ -124,7 +120,7 @@ public class DataNodeImpl extends UnicastRemoteObject implements DataNode {
 			}
 			try { //Receive chunk
 				bos = new BufferedOutputStream(new FileOutputStream(
-						Project.DATA_FOLDER+fileName+tagDataNode+this.chunkNumber+fileExtension), bufferSize);
+						SettingsManager.DATA_FOLDER+fileName+SettingsManager.TAG_DATANODE+this.chunkNumber), bufferSize);
 				while((nbRead = socketInputStream.read(buf)) != -1) { 
 					bos.write(buf, 0, nbRead);
 				}
@@ -132,18 +128,18 @@ public class DataNodeImpl extends UnicastRemoteObject implements DataNode {
 				socketInputStream.close();
 				communicationSocket.close();
 				this.serverSocket.close();
-				System.out.println(messageHeader + "Chunk received : "+fileName+tagDataNode+this.chunkNumber+fileExtension);
+				System.out.println(messageHeader + "Chunk received : "+fileName+SettingsManager.TAG_DATANODE+this.chunkNumber);
 				if (repFactor > 1) { //Propagate chunk
-					DataNode dataNode = (DataNode) Naming.lookup("//"+copiesLocations.get(0)+":"+Project.PORT_DATANODE+"/DataNode");
+					DataNode dataNode = (DataNode) Naming.lookup("//"+copiesLocations.get(0)+":"+SettingsManager.PORT_DATANODE+"/DataNode");
 					socketPropagateChunkCopy = new Socket(copiesLocations.get(0), 
-							dataNode.processChunk(Command.CMD_WRITE, fileName, fileExtension, this.chunkNumber));
+							dataNode.processChunk(Command.CMD_WRITE, fileName, this.chunkNumber));
 					socketOutputStream = new ObjectOutputStream(socketPropagateChunkCopy.getOutputStream());
 					socketOutputStream.writeObject(repFactor-1);
 					for (String server : copiesLocations.subList(1, repFactor-1)) {
 						socketOutputStream.writeObject(server);
 					}
 					bis = new BufferedInputStream(new FileInputStream(
-							Project.DATA_FOLDER+fileName+tagDataNode+this.chunkNumber+fileExtension), bufferSize);
+							SettingsManager.DATA_FOLDER+fileName+SettingsManager.TAG_DATANODE+this.chunkNumber), bufferSize);
 					while((nbRead = bis.read(buf)) != -1) {
 						socketOutputStream.write(buf, 0, nbRead);
 					}
@@ -151,7 +147,7 @@ public class DataNodeImpl extends UnicastRemoteObject implements DataNode {
 					socketOutputStream.close();
 					socketPropagateChunkCopy.close();
 					System.out.println(messageHeader + "Chunk sent : n°" + this.chunkNumber + " from file "
-							+ this.fileName+this.fileExtension + " sent to "
+							+ this.fileName + " sent to "
 							+ copiesLocations.get(0));
 				}
 			}catch (Exception e) {
@@ -171,21 +167,20 @@ public class DataNodeImpl extends UnicastRemoteObject implements DataNode {
 			try {
 				Socket communicationSocket = serverSocket.accept();
 				socketOutputStream = new ObjectOutputStream(communicationSocket.getOutputStream());
-				if ((new File(Project.DATA_FOLDER+fileName+tagDataNode+chunkNumber+fileExtension)).exists()) {
+				if ((new File(SettingsManager.DATA_FOLDER+fileName+SettingsManager.TAG_DATANODE+chunkNumber)).exists()) {
 					bis = new BufferedInputStream(new FileInputStream(
-							Project.DATA_FOLDER+fileName+tagDataNode+chunkNumber+fileExtension), bufferSize);
+							SettingsManager.DATA_FOLDER+fileName+SettingsManager.TAG_DATANODE+chunkNumber), bufferSize);
 					socketOutputStream.writeObject(Command.CMD_READ);
 					socketOutputStream.writeObject(fileName);
-					socketOutputStream.writeObject(fileExtension);
 					socketOutputStream.writeObject(chunkNumber);
 					while((nbRead = bis.read(buf)) != -1) {
 						socketOutputStream.write(buf, 0, nbRead);
 					}
 					bis.close();
-					System.out.println(messageHeader + "Chunk n°" + chunkNumber + " from file " + fileName + fileExtension
+					System.out.println(messageHeader + "Chunk n°" + chunkNumber + " from file " + fileName
 							+ " sent to client");
 				} else System.err.println(chunkNotFoundError 
-						+ " : " +Project.DATA_FOLDER+fileName+tagDataNode+chunkNumber+fileExtension);
+						+ " : " +SettingsManager.DATA_FOLDER+fileName+SettingsManager.TAG_DATANODE+chunkNumber);
 				socketOutputStream.close();
 				communicationSocket.close();
 				this.serverSocket.close();
@@ -200,15 +195,15 @@ public class DataNodeImpl extends UnicastRemoteObject implements DataNode {
 		private void delete() {
 			boolean chunkFound = false;
 			int chunkNumber;
-			for (String file : (new File(Project.DATA_FOLDER)).list()) {
-				if (file.startsWith(fileName+tagDataNode) && file.endsWith(fileExtension)) {
+			for (String file : (new File(SettingsManager.DATA_FOLDER)).list()) {
+				if (file.startsWith(fileName+SettingsManager.TAG_DATANODE)) {
 					try {
-						chunkNumber = Integer.parseInt(file.substring((fileName+tagDataNode).length(),
-								file.lastIndexOf(fileExtension)));
-						if ((new File(Project.DATA_FOLDER+file)).delete()) {
-							nameNode.chunkDeleted(fileName+fileExtension, chunkNumber, serverAddress);
+						chunkNumber = Integer.parseInt(file.substring((fileName+SettingsManager.TAG_DATANODE).length(),
+								file.length()));
+						if ((new File(SettingsManager.DATA_FOLDER+file)).delete()) {
+							nameNode.chunkDeleted(fileName, chunkNumber, serverAddress);
 							System.out.println(messageHeader + "Chunk deleted : "
-									+Project.DATA_FOLDER+fileName+tagDataNode+chunkNumber+fileExtension);
+									+SettingsManager.DATA_FOLDER+fileName+SettingsManager.TAG_DATANODE+chunkNumber);
 						} else System.err.println(errorHeader + "Could not delete file " + file);
 					} catch (RemoteException e) {
 						System.out.println(nameNodeNotBoundError);
@@ -220,7 +215,7 @@ public class DataNodeImpl extends UnicastRemoteObject implements DataNode {
 					chunkFound = true;
 				}
 			}
-			if (!chunkFound) System.err.println(chunkNotFoundError + fileName+fileExtension);
+			if (!chunkFound) System.err.println(chunkNotFoundError + fileName);
 		}
 	}
 
@@ -236,21 +231,20 @@ public class DataNodeImpl extends UnicastRemoteObject implements DataNode {
 	}
 
 	@Override
-	public int processChunk(Project.Command command, String fileName, String fileExtension, int chunkNumber) {
+	public int processChunk(SettingsManager.Command command, String fileName, int chunkNumber) {
 		boolean avalaiblePortFound = false;
 		ServerSocket testSocket;
-		int counter = 0, port = (new Random()).nextInt(63000) + 2000;
-		while (!avalaiblePortFound && counter < 10000) {
+		int maxTry = 10000, counter = 0, port = (new Random()).nextInt(63000) + 2000;
+		while (!avalaiblePortFound && counter < maxTry) {
 			try {
 				testSocket = new ServerSocket(port);
 				testSocket.close();
-				(new Thread(new TaskExecutor(port, command, fileName, fileExtension, chunkNumber))).start();
+				(new Thread(new TaskExecutor(port, command, fileName, chunkNumber))).start();
 				avalaiblePortFound = true;
-			} catch (IOException ex) { //Port is occupied
-			}
+			} catch (IOException ex) {} //Port is occupied
 			counter++;
 		}
-		if (counter == 100) return -1;
+		if (counter == maxTry) return -1;
 		else return port;
 	}		
 
@@ -259,7 +253,7 @@ public class DataNodeImpl extends UnicastRemoteObject implements DataNode {
 	 */
 	private static void printUsage() {
 		System.out.println(messageHeader + "Incorrect parameters\nUsage :"
-				+ "\njava DataNodeImpl <server>\n With server = address of the server"
+				+ "\njava DataNodeImpl <server>\nWith server = address of the server"
 				+ " the DataNodeImpl is executed on");
 	}
 
@@ -272,14 +266,15 @@ public class DataNodeImpl extends UnicastRemoteObject implements DataNode {
 		if (args.length == 1) {
 			System.out.println(messageHeader + "DataNode starting...");
 			try{
-				LocateRegistry.createRegistry(Project.PORT_DATANODE);
+				LocateRegistry.createRegistry(SettingsManager.PORT_DATANODE);
 			} catch(Exception e) {}
 			try { //Connection to NameNode and initialization
-				NameNode nameNode = (NameNode) Naming.lookup("//"+Project.NAMENODE+":"+Project.PORT_NAMENODE+"/NameNode");
-				Naming.bind("//"+args[0]+":"+Project.PORT_DATANODE+"/DataNode", new DataNodeImpl(nameNode, args[0]));
+				NameNode nameNode = (NameNode) Naming.lookup(
+						"//"+SettingsManager.getMasterNodeAddress()+":"+SettingsManager.PORT_NAMENODE+"/NameNode");
+				Naming.bind("//"+args[0]+":"+SettingsManager.PORT_DATANODE+"/DataNode", new DataNodeImpl(nameNode, args[0]));
 				System.out.println(messageHeader + "DataNode bound in registry");
-				if (!(new File(Project.DATA_FOLDER).exists())) {
-					(new File(Project.DATA_FOLDER)).mkdirs(); //Create data directory
+				if (!(new File(SettingsManager.DATA_FOLDER).exists())) {
+					(new File(SettingsManager.DATA_FOLDER)).mkdirs(); //Create data directory
 				}
 			} catch (NotBoundException e) {
 				System.err.println(nameNodeNotBoundError);

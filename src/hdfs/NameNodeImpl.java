@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.concurrent.ConcurrentHashMap;
 
-import config.Project;
+import config.SettingsManager;
 
 public class NameNodeImpl extends UnicastRemoteObject implements NameNode {
 	/**
@@ -27,8 +27,10 @@ public class NameNodeImpl extends UnicastRemoteObject implements NameNode {
 	private static String metadataPrinting = ">>> [METADATA] ";
 	private static final String noDataNodeError = errorHeader
 			+ "No DataNode server avalaible";
+	private static final String illegalReplicationFactorError = errorHeader
+			+ "Replication factor must be strictly positive";
 	private static final long serialVersionUID = 1L;
-	private static final String backupFile = Project.DATA_FOLDER + "namenode-data";
+	private static final String backupFile = SettingsManager.DATA_FOLDER + "namenode-data";
 
 	/**
 	 * Metadata for files on the file system.
@@ -43,12 +45,6 @@ public class NameNodeImpl extends UnicastRemoteObject implements NameNode {
 	 */
 	private ArrayList<String> avalaibleDataNodes;
 
-	/**
-	 * Reachable Daemons (Daemons known alive).
-	 * Server addresses.
-	 */
-	private ArrayList<String> avalaibleDaemons;
-	
 	/**
 	 * Replication factor of the NameNode.
 	 */
@@ -88,7 +84,6 @@ public class NameNodeImpl extends UnicastRemoteObject implements NameNode {
 	public NameNodeImpl() throws RemoteException {
 		if (!this.recoverData()) this.metadata = new ConcurrentHashMap<String, FileData>();
 		this.avalaibleDataNodes = new ArrayList<String>();
-		this.avalaibleDaemons = new ArrayList<String>();
 		this.defaultReplicationFactor = 1;
 		this.dataWriter = new DataWriter();
 		this.printMetadata();
@@ -113,6 +108,10 @@ public class NameNodeImpl extends UnicastRemoteObject implements NameNode {
 	@Override
 	public ArrayList<String> writeChunkRequest(int replicationFactor) throws RemoteException {
 		// FIXME Implement best choice pick among avaIlable servers
+		if (replicationFactor < 1) {
+			System.err.println(illegalReplicationFactorError);
+			return null;
+		}
 		int numberReturned = replicationFactor < this.avalaibleDataNodes.size() ?
 				replicationFactor : this.avalaibleDataNodes.size();
 		if (numberReturned > 0) {
@@ -129,7 +128,8 @@ public class NameNodeImpl extends UnicastRemoteObject implements NameNode {
 	}
 
 	@Override
-	public ArrayList<String> readFileRequest(String fileName) throws RemoteException {
+	public ArrayList<ArrayList<String>> readFileRequest(String fileName) throws RemoteException {
+		fileName = ignorePath(fileName);
 		if (!this.metadata.containsKey(fileName)) {
 			System.err.println(errorHeader + "File " + fileName
 					+ " unknown to NameNode");
@@ -140,22 +140,26 @@ public class NameNodeImpl extends UnicastRemoteObject implements NameNode {
 					+ " information concerning file " + fileName);
 			return null;
 		}
-		ArrayList<String> result = new ArrayList<String>();
+		ArrayList<String> chunkHandles;
+		ArrayList<ArrayList<String>> result = new ArrayList<ArrayList<String>>();
 		boolean avalaibleReplicaServer = false;
 		FileData fileData = this.metadata.get(fileName);
 		for(int chunk = 0 ; chunk < fileData.getFileSize() ; chunk++) {
 			if (fileData.containsChunkHandle(chunk)) {
+				chunkHandles = new ArrayList<String>();
 				for (String server : fileData.getChunkHandle(chunk)) {
 					if (this.avalaibleDataNodes.contains(server)) {
-						result.add(server);
+						chunkHandles.add(server);
 						avalaibleReplicaServer = true;
-						break;
 					}
-					if (!avalaibleReplicaServer) {
-						System.err.println(errorHeader + "No server containing a replica "
-								+ "is avalaible for chunk " + chunk + " from file " + fileName);
-						return null;
-					} else avalaibleReplicaServer = false;
+				}
+				if (!avalaibleReplicaServer) {
+					System.err.println(errorHeader + "No server containing a replica "
+							+ "is avalaible for chunk " + chunk + " from file " + fileName);
+					return null;
+				} else {
+					result.add(chunkHandles);
+					avalaibleReplicaServer = false;
 				}
 			} else {
 				System.err.println(errorHeader + "Chunk handle for chunk number "
@@ -168,6 +172,7 @@ public class NameNodeImpl extends UnicastRemoteObject implements NameNode {
 
 	@Override
 	public ArrayList<String> deleteFileRequest(String fileName) throws RemoteException {
+		fileName = ignorePath(fileName);
 		if (!this.metadata.containsKey(fileName)) {
 			System.err.println(errorHeader + "File " + fileName
 					+ " unknown to NameNode");
@@ -198,23 +203,25 @@ public class NameNodeImpl extends UnicastRemoteObject implements NameNode {
 	public void chunkWritten(String fileName, int fileSize, int chunkSize, int replicationFactor, int chunkNumber, String server) 
 			throws RemoteException {
 		FileData fileData;
+		fileName = ignorePath(fileName);
 		if (!this.metadata.containsKey(fileName)) {
 			fileData = new FileData(fileSize, chunkSize, replicationFactor); //FIXME file size
 			fileData.addChunkLocation(chunkNumber, server);
 			this.metadata.put(fileName, fileData);
 		} else {
 			fileData = this.metadata.get(fileName);
-			if (fileData.getChunkSize() != chunkSize) {
-				if (fileData.getFileSize() != fileSize || fileData.getReplicationFactor() != replicationFactor) {
-					fileData.setFileSize(fileSize);
-					fileData.setChunkSize(chunkSize);
-					fileData.setReplicationFactor(replicationFactor);
-					fileData.getChunkHandles().clear();
-					System.err.println(errorHeader + "Data for file "
-							+ fileName + " has been overwritten by new ones");
-				} else { //Received a chunk from a known file with an unknown chunk size : the chunk is the result of a map operation 
-					fileData.setChunkSize(chunkSize);
-				}
+			if (fileData.getChunkSize() != chunkSize
+					&& fileData.getFileSize() == fileSize && fileData.getReplicationFactor() == replicationFactor) {
+				//Received a chunk from a known file with an unknown chunk size : the chunk is the result of a map operation 
+				fileData.setChunkSize(chunkSize); 
+			} else if (fileData.getChunkSize() != chunkSize || fileData.getFileSize() != fileSize 
+					|| fileData.getReplicationFactor() != replicationFactor) {
+				fileData.setFileSize(fileSize);
+				fileData.setChunkSize(chunkSize);
+				fileData.setReplicationFactor(replicationFactor);
+				fileData.getChunkHandles().clear();
+				System.err.println(errorHeader + "Data for file "
+						+ fileName + " has been overwritten by new ones");
 			}
 			fileData.addChunkLocation(chunkNumber, server);
 		}
@@ -224,6 +231,7 @@ public class NameNodeImpl extends UnicastRemoteObject implements NameNode {
 	@Override
 	public void allChunkWritten(String fileName) {
 		FileData fileData;
+		fileName = ignorePath(fileName);
 		if (!this.metadata.containsKey(fileName)) { //Empty file
 			fileData = new FileData(0, 0, 1);
 			this.metadata.put(fileName, fileData);
@@ -251,23 +259,11 @@ public class NameNodeImpl extends UnicastRemoteObject implements NameNode {
 		}
 		(new Thread(this.dataWriter)).start(); //Run data writing in backup file
 	}
-	
+
 	@Override
 	public synchronized void notifyNameNodeAvailability(String serverAddress) throws RemoteException {
 		if (!this.avalaibleDataNodes.contains(serverAddress)) this.avalaibleDataNodes.add(serverAddress);
 		System.out.println(messageHeader + "DataNode running on " + serverAddress + " connected");
-	}
-	
-	@Override
-	public void notifyDaemonAvailability(String serverAddress) throws RemoteException {
-		if (!this.avalaibleDaemons.contains(serverAddress)) this.avalaibleDaemons.add(serverAddress);
-		System.out.println(messageHeader + "Daemon running on " + serverAddress + " connected");
-	}
-	
-	@Override
-	public ArrayList<String> getAvalaibleDaemons() throws RemoteException {
-		if (this.avalaibleDaemons.isEmpty()) return null;
-		else return this.avalaibleDaemons;
 	}
 
 	/**
@@ -299,6 +295,18 @@ public class NameNodeImpl extends UnicastRemoteObject implements NameNode {
 	}
 
 	/**
+	 * Returns name of the file located at given path.
+	 * Ignores folder path.
+	 * 
+	 * @param filePath
+	 * @return name of the file
+	 */
+	public String ignorePath(String filePath) {
+		return ((filePath.contains("/")) ? filePath.substring(filePath.lastIndexOf('/')+1) : 
+			((filePath.contains("\\")) ? filePath.substring(filePath.lastIndexOf('\\')+1) : filePath));
+	}
+	
+	/**
 	 * Prints metadata on output stream.
 	 */
 	private void printMetadata() {
@@ -314,7 +322,6 @@ public class NameNodeImpl extends UnicastRemoteObject implements NameNode {
 			}
 		}
 		System.out.println(metadataPrinting + "available DataNodes : " + this.avalaibleDataNodes);
-		System.out.println(metadataPrinting + "available Daemons : " + this.avalaibleDaemons);
 	}
 
 	/**
@@ -332,13 +339,13 @@ public class NameNodeImpl extends UnicastRemoteObject implements NameNode {
 			e1.printStackTrace();
 		}
 		try{
-			LocateRegistry.createRegistry(Project.PORT_NAMENODE);
+			LocateRegistry.createRegistry(SettingsManager.PORT_NAMENODE);
 		} catch(Exception e) {}
 		try {
-			Naming.bind("//"+Project.NAMENODE+":"+Project.PORT_NAMENODE+"/NameNode", new NameNodeImpl());
+			Naming.bind("//"+SettingsManager.getMasterNodeAddress()+":"+SettingsManager.PORT_NAMENODE+"/NameNode", new NameNodeImpl());
 			System.out.println(messageHeader + "NameNode bound in registry");
-			if (!(new File(Project.DATA_FOLDER).exists())) {
-				(new File(Project.DATA_FOLDER)).mkdirs(); //Create data directory
+			if (!(new File(SettingsManager.DATA_FOLDER).exists())) {
+				(new File(SettingsManager.DATA_FOLDER)).mkdirs(); //Create data directory
 			}
 		} catch (AlreadyBoundException e) {
 			System.err.println(errorHeader + "NameNode is already running on this server");
