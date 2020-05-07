@@ -1,6 +1,6 @@
 #!/bin/bash
 display_usage() {  
-	echo -e "usage : /config/deploy.sh <serversloginID> [dataPathOnServers]" 
+	echo -e "usage : /config/deploy.sh <serversloginID>" 
 }
 
 # check whether user had supplied -h or --help, if yes display usage 
