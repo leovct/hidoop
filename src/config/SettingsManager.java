@@ -36,6 +36,10 @@ public class SettingsManager {
 	 */
 	public static final String TAG_DATANODE = "-serverchunk";
 
+	public static final String TAG_MAP = "map-";
+	public static final String TAG_REDUCE = "red-";
+	public static final String TAG_RESULT = "resf-";
+
 	/**
 	 * Path for servers configuration file.
 	 */
