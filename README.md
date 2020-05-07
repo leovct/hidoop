@@ -2,7 +2,7 @@
 ![Language Java](https://img.shields.io/badge/Language-Java-blue "Language Java") ![Status Development](https://img.shields.io/badge/Status-Development-brightgreen "Status Development")  
 Simple **Big Data Platform** running **MapReduce applications**, inspired by [Hadoop](https://hadoop.apache.org/).  
 
-Hidoop is a platform allowing the execution of applications based on MapReduce programming model on a computer cluster.
+Hidoop is a platform allowing the execution of applications based on MapReduce programming model on a computer cluster.  
 This project is a very first experiment on the theme of competing applications for intensive computing and mass data processing.  
 It consists in a lite version of Hadoop, composed of two modules:
 * :file_folder: **A distributed file-system** managing data storing on a cluster - _inspired by Hadoop Distributed File System (HDFS)_
@@ -184,8 +184,8 @@ java -classpath bin application.WordCount_MapReduce <filename>
 > `java -classpath bin application.WordCount_MapReduce filesample.txt`  
 > Result of process is written in _filesample.txt-resf_ file (KV format) in project's root folder
 
-*Note: It is possible to compare the performances of MapReduce applications with their iterative versions, also present in the package. 
-Keep in mind that the time saving will only be noticeable on very large files. Indeed, the MapReduce process is quite expensive and is only useful for large files to be processed.
+*Note: It is possible to compare the performances of MapReduce applications with their iterative versions, also present in the package.  
+Keep in mind that the time saving will only be noticeable on very large files. Indeed, the MapReduce process is quite expensive and is only useful for large files to be processed.  
 :warning: This project is still under development, the results may not be very significant at this time.*  
 
 ### Contributors :busts_in_silhouette:
