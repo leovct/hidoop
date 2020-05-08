@@ -1,4 +1,8 @@
-# Hidoop
+<p align="center">
+  <img src="img/icon-hidoop.png" width=100/><br/>
+</p>
+<h1 align="center">Hidoop</h1>
+
 ![Language Java](https://img.shields.io/badge/Language-Java-blue "Language Java") ![Status Development](https://img.shields.io/badge/Status-Development-brightgreen "Status Development")  
 Simple **Big Data Platform** running **MapReduce applications**, inspired by [Hadoop](https://hadoop.apache.org/).  
 
@@ -7,6 +11,28 @@ This project is a very first experiment on the theme of competing applications f
 It consists in a lite version of Hadoop, composed of two modules:
 * :file_folder: **A distributed file-system** managing data storing on a cluster - _inspired by Hadoop Distributed File System (HDFS)_
 * :eight_spoked_asterisk: **An implementation of the MapReduce programming model** for large-scale data processing - _inspired by Hadoop MapReduce_
+
+## Table of contents
+- [Overview](#overview)
+- [Getting started :pushpin:](#getting-started-pushpin)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+  - [Configuration](#configuration)
+    - [Servers addresses](#servers-addresses)
+    - [Other settings](#other-settings)
+  - [Run Hidoop :fast_forward:](#run-hidoop-fast_forward)
+    - [Deployment](#deployment)
+    - [Launching](#launching)
+  - [Spread data on servers using HDFS :file_folder:](#spread-data-on-servers-using-hdfs-file_folder)
+    - [Data Format](#data-format)
+      - [Line format](#line-format)
+      - [KV format](#kv-format)
+    - [Write a file on HDFS](#write-a-file-on-hdfs)
+    - [Read a file from HDFS](#read-a-file-from-hdfs)
+    - [Delete a file from HDFS](#delete-a-file-from-hdfs)
+  - [Run a MapReduce application on the cluster :eight_spoked_asterisk:](#run-a-mapreduce-application-on-the-cluster-eight_spoked_asterisk)
+    - [Example: Running WordCount application](#example-running-wordcount-application)
+  - [Contributors :busts_in_silhouette:](#contributors-busts_in_silhouette)
 
 ## Overview
 
