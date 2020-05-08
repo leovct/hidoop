@@ -13,6 +13,9 @@ It consists in a lite version of Hadoop, composed of two modules:
 * :eight_spoked_asterisk: **An implementation of the MapReduce programming model** for large-scale data processing - _inspired by Hadoop MapReduce_
 
 ## Table of contents
+<details>
+<summary>Click to expand</summary>
+
 - [Overview](#overview)
 - [Getting started :pushpin:](#getting-started-pushpin)
     - [Prerequisites](#prerequisites)
@@ -33,6 +36,7 @@ It consists in a lite version of Hadoop, composed of two modules:
 - [Run a MapReduce application on the cluster :eight_spoked_asterisk:](#run-a-mapreduce-application-on-the-cluster-eight_spoked_asterisk)
     - [Example: Running WordCount application](#example-running-wordcount-application)
 - [Contributors :busts_in_silhouette:](#contributors-busts_in_silhouette)
+</details>
 
 ## Overview
 
@@ -216,4 +220,4 @@ Keep in mind that the time saving will only be noticeable on very large files. I
 
 ## Contributors :busts_in_silhouette:
 
-Valentin Flageat, Baptiste Gréaud, Léo Vincent
+[Valentin Flageat](https://github.com/vaflag) - [Baptiste Gréaud](https://github.com/bgreaud) - [Léo Vincent](https://github.com/leovct)
