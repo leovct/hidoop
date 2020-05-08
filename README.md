@@ -1,7 +1,8 @@
-<p align="center">
-  <img src="img/icon-hidoop.png" width=100/><br/>
-</p>
-<h1 align="center">Hidoop</h1>
+<div align="center">
+    <img src="img/icon-hidoop.png" width=150/>
+    <h1>Hidoop</h1>
+    <p>Simple <strong>Big Data Platform</strong> running <strong>MapReduce applications</strong>, inspired by <a href="https://hadoop.apache.org/">Hadoop</a></p>
+</div>
 
 ![Language Java](https://img.shields.io/badge/Language-Java-blue "Language Java") ![Status Development](https://img.shields.io/badge/Status-Development-brightgreen "Status Development")  
 Simple **Big Data Platform** running **MapReduce applications**, inspired by [Hadoop](https://hadoop.apache.org/).  
