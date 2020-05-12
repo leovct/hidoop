@@ -41,7 +41,7 @@ It consists in a lite version of Hadoop, composed of two modules:
 ## Overview
 
 This application allows its user to **process large data sets across multiple servers** using the MapReduce programming model.  
-MapReduce programming model is used to **parallelize the processing of large-scale data** among a cluster.  
+This programming model is used to **parallelize the processing of large-scale data** among a cluster.  
 Each server from the cluster processes a small part of data.
 In this project, processing data takes place in 3 steps:  
 * Data (provided as a file) is cut into small chunks and spread over the servers (process managed by __HDFS__)
@@ -55,12 +55,12 @@ For example, MapReduce programming model can be use to parallelize the counting 
 
 ### Prerequisites
 
-* Current version must be run on a **Linux** system
-* Current version also needs [MATE Terminal](https://mate-desktop.org/) to be installed on the system
-* All servers (or machine) must be in a same **network**, **accessible by the machine running the project**
-* Servers need to be accessible via **SSH**
-* All servers must have a **recent version of Java** (1.8 or more recent)
-* Java compiler used must produce code that is **executable by all servers**
+* Current version must be run on a **Linux** system.
+* Current version also needs [MATE Terminal](https://mate-desktop.org/) to be installed on the system.
+* All servers (or machine) must be in a same **network**, **accessible by the machine running the project**.
+* Servers need to be accessible via **SSH**.
+* All servers must have a **recent version of Java** (1.8 or more recent).
+* Java compiler used must produce code that is **executable by all servers**.
 
 ### Installation
 
