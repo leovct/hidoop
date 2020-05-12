@@ -23,7 +23,7 @@ It consists in a lite version of Hadoop, composed of two modules:
     - [Configuration](#configuration)
         - [Servers addresses](#servers-addresses)
         - [Other settings](#other-settings)
-- [Run Hidoop :fast_forward:](#run-hidoop-fast_forward)
+- [Run Hidoop :fast_forward:](#run-hidoop-rocket)
     - [Deployment](#deployment)
     - [Launching](#launching)
 - [Spread data on servers using HDFS :file_folder:](#spread-data-on-servers-using-hdfs-file_folder)
@@ -86,7 +86,7 @@ Server **written first** (at the top of the list) will automatically be set as *
 Extra settings can be configured, such as **chunk size** or **data storage folder** where to store data on servers.  
 _Current version of the project requires these parameters to be configured directly in the code, in file *src/config/settingsManager.java*, in \*.sh and config/*.sh bash scripts._
 
-## Run Hidoop :fast_forward:
+## Run Hidoop :rocket:
 
 Once the project is configured (see section above), running the platform is a **2-step procedure**.  
 First executable files have to be **deployed** on the cluster, then the platform has to be **launched**.
