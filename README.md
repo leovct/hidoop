@@ -156,10 +156,10 @@ In Key-Value format, text file is composed of key-value pairs.
 Each key-value pair is written **on a line**, separator is *\<-\>* symbol.  
 Here is an example of KV format file content :  
 
-> key1<->value1
-> key2<->value2
-> key3<->value3
-> key4<->value4
+>key1 <-> value1
+>key2 <-> value2
+>key3 <-> value3
+>key4 <-> value4
 
 ### Write a file on HDFS
 
