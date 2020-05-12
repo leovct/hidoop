@@ -186,7 +186,7 @@ To delete a file from HDFS (corresponds to **delete data from servers**), open a
 ```
 java -classpath bin hdfs.HdfsClient delete <sourcefilename>
 ```
-* *\<sourcefilename\>* is the name of the file to delete from HDFS. It corresponds to the name of a file that has been written on HDFS previously.
+*\<sourcefilename\>* is the name of the file to delete from HDFS. It corresponds to the name of a file that has been written on HDFS previously.
 
 ## Run a MapReduce application on the cluster :eight_spoked_asterisk:
 
