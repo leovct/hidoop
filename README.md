@@ -191,7 +191,8 @@ java -classpath bin hdfs.HdfsClient delete <sourcefilename>
 ## Run a MapReduce application on the cluster :eight_spoked_asterisk:
 
 MapReduce application models are given in _src/application_ package (_WordCount\_MapReduce.java_ & _MonteCarlo\MapReduce.java_).  
-The following instructions can only work if Hidoop platform is running on the cluster.  
+:warning: **The following instructions can only work if Hidoop platform is running on the cluster.**
+
 To run MapReduce applications processing data, the **data must first be distributed on the cluster** (see HDFS section above).  
 It is also possible to run MapReduce applications that do not take a file as a parameter (for example QuasiMonteCarlo application that generates a number of points in a unit square in order to approximate the value of pi).
 
