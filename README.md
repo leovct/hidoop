@@ -169,7 +169,7 @@ java -classpath bin hdfs.HdfsClient write <line|kv> <sourcefilename> [replicatio
 ```
 * *\<line|kv\>* corresponds to input file format, line or KV format.  
 * *\<sourcefilename\>* is the name of the file to proceed.
-* *\<replicationfactor\>* is an optional argument. It corresponds to the replication factor of the file, i.e. the number of time each chunk is duplicated on the cluster, in order to anticipate server failures. Default is 1.
+* *[replicationfactor]* is an optional argument. It corresponds to the replication factor of the file, i.e. the number of time each chunk is duplicated on the cluster, in order to anticipate server failures. Default is 1.
 
 ### Read a file from HDFS
 
