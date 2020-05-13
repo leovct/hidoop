@@ -13,7 +13,6 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.concurrent.ConcurrentHashMap;
 
 import config.SettingsManager;
@@ -55,7 +54,6 @@ public class NameNodeImpl extends UnicastRemoteObject implements NameNode {
 	 */
 	private DataWriter dataWriter;
 
-
 	/**
 	 * Runnable class saving NameNode data into a backup local file.
 	 * (Nested class)
@@ -69,7 +67,7 @@ public class NameNodeImpl extends UnicastRemoteObject implements NameNode {
 			try {
 				ObjectOutputStream outputStream = new ObjectOutputStream(new FileOutputStream(backupFile));
 				outputStream.writeObject(metadata);
-				outputStream.close(); //FIXME save available DataNodes & Daemons
+				outputStream.close(); //FIXME save available DataNodes
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -107,7 +105,7 @@ public class NameNodeImpl extends UnicastRemoteObject implements NameNode {
 
 	@Override
 	public ArrayList<String> writeChunkRequest(int replicationFactor) throws RemoteException {
-		// FIXME Implement best choice pick among avaIlable servers
+		// FIXME Implement best choice pick among available servers
 		if (replicationFactor < 1) {
 			System.err.println(illegalReplicationFactorError);
 			return null;
@@ -116,8 +114,9 @@ public class NameNodeImpl extends UnicastRemoteObject implements NameNode {
 				replicationFactor : this.avalaibleDataNodes.size();
 		if (numberReturned > 0) {
 			ArrayList<String> result = new ArrayList<String>();
-			Collections.shuffle(this.avalaibleDataNodes); //FIXME Random server pick
-			for (int i = 0 ; i < numberReturned ; i++) {
+			result.add(this.avalaibleDataNodes.remove(0)); //Adds first address of available server list
+			this.avalaibleDataNodes.add(result.get(0)); //Moves to the end of available servers list
+			for (int i = 0 ; i < numberReturned - 1 ; i++) {
 				result.add(this.avalaibleDataNodes.get(i));
 			}
 			return result;
@@ -262,7 +261,7 @@ public class NameNodeImpl extends UnicastRemoteObject implements NameNode {
 
 	@Override
 	public synchronized void notifyNameNodeAvailability(String serverAddress) throws RemoteException {
-		if (!this.avalaibleDataNodes.contains(serverAddress)) this.avalaibleDataNodes.add(serverAddress);
+		if (!this.avalaibleDataNodes.contains(serverAddress)) this.avalaibleDataNodes.add(0, serverAddress);
 		System.out.println(messageHeader + "DataNode running on " + serverAddress + " connected");
 	}
 
@@ -305,7 +304,7 @@ public class NameNodeImpl extends UnicastRemoteObject implements NameNode {
 		return ((filePath.contains("/")) ? filePath.substring(filePath.lastIndexOf('/')+1) : 
 			((filePath.contains("\\")) ? filePath.substring(filePath.lastIndexOf('\\')+1) : filePath));
 	}
-	
+
 	/**
 	 * Prints metadata on output stream.
 	 */
