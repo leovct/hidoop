@@ -73,13 +73,13 @@ public class HdfsClient {
 		Socket socket;
 		ObjectOutputStream socketOutputStream;
 		byte[] buf;
-		int portNumber, chunkCounter = 0;
+		int portNumber, chunkCounter = 0, chunkSize = SettingsManager.getChunkSize();
 		long index = 0;
 
 		System.out.println(messageHeader
 				+ "%WRITE% Processing file " + localFSSourceFname + "...");
 		try { //Connection to NameNode
-			nameNode = (NameNode) Naming.lookup("//"+SettingsManager.getMasterNodeAddress()+":"+SettingsManager.PORT_NAMENODE+"/NameNode"); 
+			nameNode = (NameNode) Naming.lookup("//"+SettingsManager.getMasterNodeAddress()+":"+SettingsManager.getPortNameNode()+"/NameNode"); 
 		} catch (NotBoundException e) {
 			System.err.println(nameNodeNotBoundError);
 			return;
@@ -95,7 +95,7 @@ public class HdfsClient {
 		while ((structure = input.read()) != null) {
 			try {
 				nameNodeResponse = nameNode.writeChunkRequest(repFactor);
-				dataNode = (DataNode) Naming.lookup("//"+nameNodeResponse.get(0)+":"+SettingsManager.PORT_DATANODE+"/DataNode");
+				dataNode = (DataNode) Naming.lookup("//"+nameNodeResponse.get(0)+":"+SettingsManager.getPortDataNode()+"/DataNode");
 				if ((portNumber = dataNode.processChunk(Command.CMD_WRITE, fileName, chunkCounter)) == -1) {
 					System.err.println(dataNodeConnectionError);
 					return;
@@ -109,19 +109,19 @@ public class HdfsClient {
 				buf = structure.writeSyntax(fmt);
 				socketOutputStream.write(buf, 0, buf.length);
 				index = input.getIndex();
-				while ((input.getIndex() - index <= SettingsManager.CHUNK_SIZE) && (structure = input.read())!= null) { 
+				while ((input.getIndex() - index <= chunkSize) && (structure = input.read())!= null) { 
 					buf = structure.writeSyntax(fmt);
 					socketOutputStream.write(buf, 0, buf.length);
 				}
 				socketOutputStream.close();
 				socket.close();
 				for (String server : nameNodeResponse) {
-					nameNode.chunkWritten(fileName, -1, SettingsManager.CHUNK_SIZE, repFactor, 
+					nameNode.chunkWritten(fileName, -1, chunkSize, repFactor, 
 							chunkCounter, server);
 				}
-				if (structure != null && structure.v.length() > SettingsManager.CHUNK_SIZE) 
+				if (structure != null && structure.v.length() > chunkSize) 
 					System.err.println(errorHeader + "Input file contains "
-							+ "a structure value whose size is bigger than chunk size ("+SettingsManager.CHUNK_SIZE+")");
+							+ "a structure value whose size is bigger than chunk size ("+chunkSize+")");
 				System.out.println(messageHeader + "Chunk n°" + chunkCounter + " sent on server "
 						+ nameNodeResponse.get(0));
 				chunkCounter++;
@@ -168,7 +168,7 @@ public class HdfsClient {
 		System.out.println(messageHeader
 				+ "%READ% Processing file " + fileName + "...");
 		try { //Connection to NameNode
-			nameNode = (NameNode) Naming.lookup("//"+SettingsManager.getMasterNodeAddress()+":"+SettingsManager.PORT_NAMENODE+"/NameNode");
+			nameNode = (NameNode) Naming.lookup("//"+SettingsManager.getMasterNodeAddress()+":"+SettingsManager.getPortNameNode()+"/NameNode");
 			nameNodeResponse = nameNode.readFileRequest(fileName);
 			if (nameNodeResponse == null) {
 				System.err.println(NameNodeFileError);
@@ -188,7 +188,7 @@ public class HdfsClient {
 			chunkHandle = 0;
 			while (!chunkRead && chunkHandle < chunkHandles.size()) {
 				try {
-					dataNode = (DataNode) Naming.lookup("//"+chunkHandles.get(chunkHandle)+":"+SettingsManager.PORT_DATANODE+"/DataNode");
+					dataNode = (DataNode) Naming.lookup("//"+chunkHandles.get(chunkHandle)+":"+SettingsManager.getPortDataNode()+"/DataNode");
 					if ((portNumber = dataNode.processChunk(Command.CMD_READ, fileName, chunkCounter)) == -1) {
 						System.err.println(dataNodeConnectionError);
 						return;
@@ -253,7 +253,7 @@ public class HdfsClient {
 		System.out.println(messageHeader
 				+ "%DELETE% Deleting file " + fileName + "...");
 		try { //Connection to NameNode
-			nameNode = (NameNode) Naming.lookup("//"+SettingsManager.getMasterNodeAddress()+":"+SettingsManager.PORT_NAMENODE+"/NameNode");
+			nameNode = (NameNode) Naming.lookup("//"+SettingsManager.getMasterNodeAddress()+":"+SettingsManager.getPortNameNode()+"/NameNode");
 			nameNodeResponse = nameNode.deleteFileRequest(fileName);
 			if (nameNodeResponse == null) {
 				System.err.println(NameNodeFileError);
@@ -271,7 +271,7 @@ public class HdfsClient {
 		}
 		for (String server : nameNodeResponse) {
 			try {
-				dataNode = (DataNode) Naming.lookup("//"+server+":"+SettingsManager.PORT_DATANODE+"/DataNode");
+				dataNode = (DataNode) Naming.lookup("//"+server+":"+SettingsManager.getPortDataNode()+"/DataNode");
 				dataNode.processChunk(Command.CMD_DELETE, fileName, chunkCounter);
 			} catch (Exception e) {
 				System.out.println(dataNodeNotBoundError + " : " + server);
@@ -280,34 +280,6 @@ public class HdfsClient {
 		}
 		System.out.println(messageHeader + "Delete command was sent to servers "
 				+ "for file " + fileName);
-	}
-
-	/**
-	 * Notifies NameNode a file has been written on a server.
-	 * In a first implementation, the aim of this method is to allow
-	 * applications from MapReduce to communicate with NameNode.
-	 * 
-	 * @param fileName name of the file the chunk is part of
-	 * @param fileSize size of the file 
-	 * @param chunkSize size of the chunk
-	 * @param replicationFactor replication factor of the chunk
-	 * @param chunkNumber number of the chunk in the file
-	 * @param server server containing the chunk
-	 * @return boolean, true if success
-	 * @throws RemoteException
-	 */
-	public static boolean notifyNameNode(String fileName, int fileSize, int chunkSize, int replicationFactor, int chunkNumber, String server) {
-		try { //Connection to NameNode
-			NameNode nameNode = (NameNode) Naming.lookup("//"+SettingsManager.getMasterNodeAddress()+":"+SettingsManager.PORT_NAMENODE+"/NameNode");
-			nameNode.chunkWritten(fileName, fileSize, chunkSize, replicationFactor, chunkNumber, server);
-		} catch (NotBoundException e) {
-			System.err.println(nameNodeNotBoundError);
-			return false;
-		} catch (Exception e) {
-			e.printStackTrace();
-			return false;
-		}
-		return true;
 	}
 
 	/**

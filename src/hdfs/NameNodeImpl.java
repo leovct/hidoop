@@ -29,7 +29,7 @@ public class NameNodeImpl extends UnicastRemoteObject implements NameNode {
 	private static final String illegalReplicationFactorError = errorHeader
 			+ "Replication factor must be strictly positive";
 	private static final long serialVersionUID = 1L;
-	private static final String backupFile = SettingsManager.DATA_FOLDER + "namenode-data";
+	private static final String backupFile = SettingsManager.getDataPath() + "namenode-data";
 
 	/**
 	 * Metadata for files on the file system.
@@ -332,19 +332,22 @@ public class NameNodeImpl extends UnicastRemoteObject implements NameNode {
 	public static void main(String[] args) {
 		System.out.println(messageHeader + "NameNode starting...");
 		if (args.length > 0 && args[0].equals("reset")) (new File(backupFile)).delete();
+		int portNameNode = SettingsManager.getPortNameNode();
+		String dataPath = SettingsManager.getDataPath();
+		if (portNameNode == -1 || dataPath == null) return;
 		try {//
 			System.out.println(messageHeader + "Machine IP : " + InetAddress.getLocalHost().getHostAddress());
 		} catch (UnknownHostException e1) {
 			e1.printStackTrace();
 		}
 		try{
-			LocateRegistry.createRegistry(SettingsManager.PORT_NAMENODE);
+			LocateRegistry.createRegistry(portNameNode);
 		} catch(Exception e) {}
 		try {
-			Naming.bind("//"+SettingsManager.getMasterNodeAddress()+":"+SettingsManager.PORT_NAMENODE+"/NameNode", new NameNodeImpl());
+			Naming.bind("//"+SettingsManager.getMasterNodeAddress()+":"+portNameNode+"/NameNode", new NameNodeImpl());
 			System.out.println(messageHeader + "NameNode bound in registry");
-			if (!(new File(SettingsManager.DATA_FOLDER).exists())) {
-				(new File(SettingsManager.DATA_FOLDER)).mkdirs(); //Create data directory
+			if (!(new File(dataPath).exists())) {
+				(new File(dataPath)).mkdirs(); //Create data directory
 			}
 		} catch (AlreadyBoundException e) {
 			System.err.println(errorHeader + "NameNode is already running on this server");

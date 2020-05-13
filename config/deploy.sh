@@ -29,6 +29,7 @@ rm */*/*.class
 [ -d "bin" ] || mkdir bin
 javac -d bin */*/*.java
 cp config/servers.config bin/config/servers.config
+cp config/settings.config bin/config/settings.config
 input=config/servers.config
 i=1
 nbrDeploy=$(< $input wc -l)
