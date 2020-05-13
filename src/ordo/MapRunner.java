@@ -58,7 +58,7 @@ public class MapRunner extends Thread {
 
 		//Notify NameNode
 		try {	
-			NameNode nameNode = (NameNode) Naming.lookup("//"+SettingsManager.getMasterNodeAddress()+":"+SettingsManager.PORT_NAMENODE+"/NameNode");
+			NameNode nameNode = (NameNode) Naming.lookup("//"+SettingsManager.getMasterNodeAddress()+":"+SettingsManager.getPortNameNode()+"/NameNode");
 			nameNode.chunkWritten(SettingsManager.TAG_MAP + filename, -1, (int)chunkSize, 1, chunkNumber, serverAddress);		
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -66,7 +66,7 @@ public class MapRunner extends Thread {
 		
 		//Notify JobManager
 		try {	
-			JobManager jobManager = (JobManager) Naming.lookup("//"+SettingsManager.getMasterNodeAddress()+":"+SettingsManager.PORT_NAMENODE+"/JobManager");
+			JobManager jobManager = (JobManager) Naming.lookup("//"+SettingsManager.getMasterNodeAddress()+":"+SettingsManager.getPortJobMaster()+"/JobManager");
 			jobManager.notifyMapDone(jobId, chunkNumber, serverAddress);
 		} catch (Exception e) {
 			e.printStackTrace();

@@ -33,7 +33,7 @@ public class JobManagerImpl extends UnicastRemoteObject implements JobManager {
 	private static String metadataPrinting = ">>> [METADATA] ";
 	//private static final String noDaemonError = errorHeader
 	//		+ "No Daemon avalaible";
-	private static final String backupFile = SettingsManager.DATA_FOLDER + "jobmanager-data";
+	private static final String backupFile = SettingsManager.getDataPath() + "jobmanager-data";
 
 	/**
 	 * Metadata for files on the file system.
@@ -271,13 +271,13 @@ public class JobManagerImpl extends UnicastRemoteObject implements JobManager {
 			e1.printStackTrace();
 		}
 		try{
-			LocateRegistry.createRegistry(SettingsManager.PORT_NAMENODE);
+			LocateRegistry.createRegistry(SettingsManager.getPortJobMaster());
 		} catch(Exception e) {}
 		try {
-			Naming.bind("//"+SettingsManager.getMasterNodeAddress()+":"+SettingsManager.PORT_NAMENODE+"/JobManager", new JobManagerImpl());
+			Naming.bind("//"+SettingsManager.getMasterNodeAddress()+":"+SettingsManager.getPortJobMaster()+"/JobManager", new JobManagerImpl());
 			System.out.println(messageHeader + "JobManager bound in registry");
-			if (!(new File(SettingsManager.DATA_FOLDER).exists())) {
-				(new File(SettingsManager.DATA_FOLDER)).mkdirs(); //Create data directory
+			if (!(new File(SettingsManager.getDataPath()).exists())) {
+				(new File(SettingsManager.getDataPath())).mkdirs(); //Create data directory
 			}
 		} catch (AlreadyBoundException e) {
 			System.err.println(errorHeader + "JobManager is already running on this server");

@@ -25,7 +25,8 @@ public class JobClient implements JobInterface {
 	private List<ArrayList<String>> chunkList = new ArrayList<ArrayList<String>>();
 	private long jobId;
 	private static String messageHeader = ">>> [JOBCLIENT] ";
-
+	private String DATA_FOLDER = SettingsManager.getDataPath(); 
+	private int PORT_DAEMON = SettingsManager.getPortDaemon();
 
 	// Constructor in case of map requiring file in input
 	public JobClient(Format.Type inputFormat, String inputFName) {
@@ -62,10 +63,10 @@ public class JobClient implements JobInterface {
 		// Retrieving NameNode & JobManager
 		try {
 			System.out.println(messageHeader + "Retrieving stub of NameNode ...");
-			nm = (NameNode)Naming.lookup("//"+SettingsManager.getMasterNodeAddress()+":"+SettingsManager.PORT_NAMENODE+"/NameNode");
+			nm = (NameNode)Naming.lookup("//"+SettingsManager.getMasterNodeAddress()+":"+SettingsManager.getPortNameNode()+"/NameNode");
 			System.out.println(messageHeader + "Stub of NameNode retrieved !!");
 			System.out.println(messageHeader + "Retrieving stub of JobManager");
-			jm = (JobManager)Naming.lookup("//"+SettingsManager.getMasterNodeAddress()+":"+SettingsManager.PORT_NAMENODE+"/JobManager");
+			jm = (JobManager)Naming.lookup("//"+SettingsManager.getMasterNodeAddress()+":"+SettingsManager.getPortJobMaster()+"/JobManager");
 			System.out.println(messageHeader + "Stub of JobManager retrieved !!");
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -93,8 +94,8 @@ public class JobClient implements JobInterface {
 		}
 		for(String serverAddress : demonsName) {
 			try {
-				System.out.println(messageHeader + "Retrieving stub of : //"+serverAddress+":"+SettingsManager.PORT_DAEMON+"/DaemonImpl" );
-				demons.add((Daemon)Naming.lookup("//"+serverAddress+":"+SettingsManager.PORT_DAEMON+"/DaemonImpl"));
+				System.out.println(messageHeader + "Retrieving stub of : //"+serverAddress+":"+PORT_DAEMON+"/DaemonImpl" );
+				demons.add((Daemon)Naming.lookup("//"+serverAddress+":"+PORT_DAEMON+"/DaemonImpl"));
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -145,8 +146,8 @@ public class JobClient implements JobInterface {
 				int numDaemon = demonsName.indexOf(machine);
 				d = demons.get(numDaemon);
 				// Creating the formats for the chunk
-				inputTmp = new LineFormat(SettingsManager.DATA_FOLDER + chunk);
-				outputTmp = new KVFormat(SettingsManager.DATA_FOLDER + SettingsManager.TAG_MAP + chunk );
+				inputTmp = new LineFormat(DATA_FOLDER + chunk);
+				outputTmp = new KVFormat(DATA_FOLDER + SettingsManager.TAG_MAP + chunk );
 
 			// In case of map requiring no file in input
 			} else {
@@ -159,7 +160,7 @@ public class JobClient implements JobInterface {
 				int numDaemon = demonsName.indexOf(machine);
 				d = demons.get(numDaemon);
 				inputTmp = null;
-				outputTmp = new KVFormat(SettingsManager.DATA_FOLDER + chunk);
+				outputTmp = new KVFormat(DATA_FOLDER + chunk);
 			}
 						
 			// Call the method to run a map on a dameon
