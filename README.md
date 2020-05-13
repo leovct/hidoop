@@ -19,26 +19,37 @@ It consists in a lite version of [Hadoop](https://hadoop.apache.org/) (developed
 <details>
 <summary>Click to expand</summary>
 
-- [Overview](#overview)
-- [Getting started :pushpin:](#getting-started-pushpin)
+- [**Overview**](#overview)
+- [**Getting started** :pushpin:](#getting-started-pushpin)
     - [Prerequisites](#prerequisites)
     - [Installation](#installation)
     - [Configuration](#configuration)
         - [Servers addresses](#servers-addresses)
         - [Other settings](#other-settings)
-- [Run Hidoop :fast_forward:](#run-hidoop-rocket)
+- [**Run Hidoop** :rocket:](#run-hidoop-rocket)
     - [Deployment](#deployment)
     - [Launching](#launching)
-- [Spread data on servers using HDFS :file_folder:](#spread-data-on-servers-using-hdfs-file_folder)
+    - [Shutdown](#shutdown)
+- [**Spread data on servers using HDFS** :file_folder:](#spread-data-on-servers-using-hdfs-file_folder)
     - [Data Format](#data-format)
         - [Line format](#line-format)
         - [KV format](#kv-format)
     - [Write a file on HDFS](#write-a-file-on-hdfs)
     - [Read a file from HDFS](#read-a-file-from-hdfs)
     - [Delete a file from HDFS](#delete-a-file-from-hdfs)
-- [Run a MapReduce application on the cluster :eight_spoked_asterisk:](#run-a-mapreduce-application-on-the-cluster-eight_spoked_asterisk)
-    - [Example: Running WordCount application](#example-running-wordcount-application)
-- [Contributors :busts_in_silhouette:](#contributors-busts_in_silhouette)
+- [**Run a MapReduce application on the cluster** :diamond_shape_with_a_dot_inside:](#run-a-mapreduce-application-on-the-cluster-diamond-shape-with-a-dot-inside)
+    - [Application WordCount](#application-wordcount)
+    - [Application QuasiMonteCarlo](#application-quasimontecarlo)
+- [**Performance analysis** :zap:](#performance-analysis-zap)
+    - [Test 1: Variation in file size](#test-1-variation-in-file-size)
+    - [Test 2: Variation in the number of servers](#test-2-variation-in-the-number-of-servers)
+    - [Test 3: Variation in the number of chunks](#test-3-variation-in-the-number-of-chunks)
+- [**Application's functioning** :gear:](#application-s-functioning-gear)
+    - [Improvements over the first version of Hidoop](#improvements-over-the-first-version-of-hidoop)
+    - [HDFS more in-depth](#hdfs-more-in-depth)
+    - [Hidoop more in depth](#hidoop-more-in-depth)
+- [**Possible improvements** :bulb:](#possible-improvements-bulb)
+- [**Contributors** :busts_in_silhouette:](#contributors-busts_in_silhouette)
 </details>
 
 ## Overview
@@ -148,86 +159,106 @@ The following instructions can only work if Hidoop platform is running on the cl
 
 ### Data Format
 
-Data to process must be stored as a file.  
-Current version of the project supports two types of format. **Format support will be later improved.**  
+Data to process must be stored as a file. Current version of the project supports two types of format. **Format support will be later improved.**  
 
 #### Line format
-In line format, text is written **line by line**.  
-A line of text is considered a unit of data, so it should not be too long.  
-Here is an example of line format file content :  
+In **line** format, text is written **line by line**. A line of text is considered a unit of data, so it should not be too long.  
 
+Here is an example of line format file content :  
 > This is the content of the file.
 > It should be written line by line,
 > lines' length should not be too disparate,
 > file can be as large as desired.
 
-#### KV format
-In Key-Value format, text file is composed of key-value pairs.  
-Each key-value pair is written **on a line**, separator is *\<-\>* symbol.  
-Here is an example of KV format file content :  
+#### Kv format
+In kv format, text file is composed of key-value pairs. Each pair is written **on a line**, separator is *\<-\>* symbol.  
 
->key1 <-> value1
->key2 <-> value2
->key3 <-> value3
->key4 <-> value4
+Here is an example of KV format file content :  
+>series <-> game-of-thrones
+>movie <-> inception
+>dish <-> pizza
+>colour <-> blue
 
 ### Write a file on HDFS
 
-To write a large file in HDFS (corresponds to **spread data among servers**), open a terminal in project's **root folder** and execute following command:
+To write a large file in HDFS (corresponds to **spreading data among servers**), open a terminal in project's **root folder** and execute following command:
 ```
-java -classpath bin hdfs.HdfsClient write <line|kv> <sourcefilename> [replicationfactor]
+java -cp bin hdfs.HdfsClient write <line|kv> <sourcefilename> [replicationfactor]
 ```
 * *\<line|kv\>* corresponds to input file format, line or KV format.  
 * *\<sourcefilename\>* is the name of the file to proceed.
-* *[replicationfactor]* is an optional argument. It corresponds to the replication factor of the file, i.e. the number of time each chunk is duplicated on the cluster, in order to anticipate server failures. Default is 1.
+* *[replicationfactor]* is an **optional** argument. It corresponds to the replication factor of the file, i.e. the number of time each chunk is duplicated on the cluster, in order to anticipate server failures. **Default value is 1**.
+
+Note: *-cp* is a shortcut for *-classpath*
 
 ### Read a file from HDFS
 
-To read a file from HDFS (corresponds to **retrieve data from servers**), open a terminal in project's **root folder** and execute following command:
+To read a file from HDFS (corresponds to **retrieving data from servers**), open a terminal in project's **root folder** and execute following command:
 ```
-java -classpath bin hdfs.HdfsClient read <filename> <destfilename>
+java -cp bin hdfs.HdfsClient read <filename> <destfilename>
 ```
-* *\<sourcefilename\>* is the name of the file to read from the servers. It corresponds to the name of a file that has been written on HDFS previously.
+* *\<sourcefilename\>* is the name of the file (written on HDFS previously) to read from the servers.
 * *\<destfilename\>* is the name of the file to store data retrieved by process (rebuilt file).
 
 ### Delete a file from HDFS
 
-To delete a file from HDFS (corresponds to **delete data from servers**), open a terminal in project's **root folder** and execute following command:
+To delete a file from HDFS (corresponds to **deleting data from servers**), open a terminal in project's **root folder** and execute following command:
 ```
-java -classpath bin hdfs.HdfsClient delete <sourcefilename>
+java -cp bin hdfs.HdfsClient delete <sourcefilename>
 ```
-*\<sourcefilename\>* is the name of the file to delete from HDFS. It corresponds to the name of a file that has been written on HDFS previously.
+*\<sourcefilename\>* is the name of the file (written on HDFS previously) to delete from HDFS.
 
-## Run a MapReduce application on the cluster :eight_spoked_asterisk:
+## Run a MapReduce application on the cluster :diamond_shape_with_a_dot_inside:
 
-MapReduce application models are given in _src/application_ package (_WordCount\_MapReduce.java_ & _MonteCarlo\MapReduce.java_).  
-:warning: **The following instructions can only work if Hidoop platform is running on the cluster.**
+MapReduce application models are given in _src/application_ package (see _WordCount\_MapReduce.java_ and _MonteCarlo\MapReduce.java_).  
 
-To run MapReduce applications processing data, the **data must first be distributed on the cluster** (see HDFS section above).  
-It is also possible to run MapReduce applications that do not take a file as a parameter (for example QuasiMonteCarlo application that generates a number of points in a unit square in order to approximate the value of pi).
+:warning: **The following instructions can only work if Hidoop platform is running on the cluster and the data is spread within the cluster.**
 
-### Example: Running WordCount application
+Note: It is also possible to run MapReduce applications that do not take a file as a parameter (for example QuasiMonteCarlo application that generates a number of points in a unitary square and which calculates the number of points inside the circle inscribed in the square in order to approach the value of pi).
 
-_src/application/WordCount\_MapReduce.java_ is a MapReduce application runnable on Hiddop platform.  
-This application counts the number of occurrences of each word in a large text file in line format (text file composed of lines).  
-First, **file must be written on HDFS** as described in _Write a file on HDFS_ section.  
-Then, execute following code from a terminal opened in project's **root folder**:
+### WordCount application
+
+**Wordcount** is a MapReduce application runnable on Hiddop platform. This application counts the number of occurrences of each word in a large text file in line format. The application is located in package _src/application/_.
+
+Note: We have also implemented an iterative version to compare the differences of performance on very large files (> 10 GB).
+
+Make sure you have written the file in HDFS before launching the application! Then, execute following code from a terminal opened in project's **root folder**:
 ```
-java -classpath bin application.WordCount_MapReduce <filename>
+java -cp bin application.WordCount_MapReduce <filename>
 ```
-*\<filename\>* is the name of the file to process. It corresponds to the name of a file that has been written on HDFS previously.
+*\<filename\>* is the name of the file (written on HDFS previously) to process.
 
-> Example: 
-> Large file to process is stored on system, at path _data/filesample.txt_  
-> First, write the file on HDFS:  
-> `java -classpath bin hdfs.HdfsClient write line data/filesample.txt 1`  
-> Then, execute the WordCount application by specifying the name of the file (without the path, HDFS is a flat hierarchy):  
-> `java -classpath bin application.WordCount_MapReduce filesample.txt`  
-> Result of process is written in _resf-filesample.txt_ file (KV format) in project's root folder
+> Example of use: 
+> Now, let's imagine for example that you would want to count the number of occurrences of all the words of a large 50 GB file stored on your system at data/filesample.txt. You want to use a MapReduce algorithm because otherwise you would take far too long.
+> The first step is to write the file in HDFS :
+> `java -cp bin hdfs.HdfsClient write line data/filesample.txt 1`  
+> The next step is to run the WordCount application by specifying the file name (without the path because HDFS is a flat hierarchy) :
+> `java -cp bin application.WordCount_MapReduce filesample.txt`  
+> The result of the process is written in the file _resf-filesample.txt_, in kv format, in project's root folder.
 
-*Note: It is possible to compare the performances of MapReduce applications with their iterative versions, also present in the package.  
-Keep in mind that the time saving will only be noticeable on very large files. Indeed, the MapReduce process is quite expensive and is only useful for large files to be processed.  
-:warning: This project is still under development, the results may not be very significant at this time.*  
+Note: It is possible to compare the performances of MapReduce applications with their iterative versions, also present in the package *src/application*.  
+Keep in mind that *the time saving will only be noticeable on very large files (> 10 Go)*. Indeed, the MapReduce process is quite expensive and is only useful for large files to be processed.  
+:warning: This project is still under development, the results may not be very significant at this time. 
+
+### QuasiMonteCarlo application
+
+## Performance analysis :zap:
+
+### Test 1: Variation in file size
+
+### Test 2: Variation in the number of servers
+
+### Test 3: Variation in the number of chunks
+
+## Application's functioning :gear:
+
+### Improvements over the first version of Hidoop
+
+### HDFS more in-depth
+
+### Hidoop more in-depth
+
+## Possible improvements :bulb:
 
 ## Contributors :busts_in_silhouette:
 
