@@ -229,11 +229,17 @@ java -cp bin application.WordCount_MapReduce <filename>
 *\<filename\>* is the name of the file (written on HDFS previously) to process.
 
 > Example of use: 
+>
 > Now, let's imagine for example that you would want to count the number of occurrences of all the words of a large 50 GB file stored on your system at data/filesample.txt. You want to use a MapReduce algorithm because otherwise you would take far too long.
+>
 > The first step is to write the file in HDFS :
+>
 > `java -cp bin hdfs.HdfsClient write line data/filesample.txt 1`  
+>
 > The next step is to run the WordCount application by specifying the file name (without the path because HDFS is a flat hierarchy) :
+>
 > `java -cp bin application.WordCount_MapReduce filesample.txt`  
+>
 > The result of the process is written in the file _resf-filesample.txt_, in kv format, in project's root folder.
 
 Note: It is possible to compare the performances of MapReduce applications with their iterative versions, also present in the package *src/application*.  
