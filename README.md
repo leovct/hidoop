@@ -113,8 +113,10 @@ Open a terminal in project's **root folder** and execute _hidoop-init.sh_ bash s
 
 A logo signalling the begining of the deployment should appear. **Deployment might take a few time** because executable files are copied on each machine of the cluster.
 
-<p align="center">
-  <img src="img/hidoop-init.png" alt="Screenshot showing execution of hidoop-init.sh script"/>
+<br/>
+<div align="center">
+  <img src="img/hidoop-init.png" alt="Screenshot showing execution of hidoop-init.sh script" width=500/>
+</div>
 <br/>
 
 ### Launching
@@ -127,8 +129,10 @@ Same remark as for the deployment, **\<username\>** has to be replaced with the 
 
 **Two terminals** with tabs should show-up, **displaying the status of the different entities of Hidoop** running on servers. On the left-hand terminal, you can see the status of the **NameNode** and the four **DataNodes** while on the right-hand terminal, you can identify the **JobManager** and the four **Daemons**. The role and functioning of these entities is explained more in detail in this section for the more curious.
 
-<p align="center">
-  <img src="img/hidoop-run.png" alt="Screenshot showing execution of hidoop-run.sh script"/>
+<br/>
+<div align="center">
+  <img src="img/hidoop-run.png" alt="Screenshot showing execution of hidoop-run.sh script" width=1000/>
+</div>
 <br/>
 
 **Hidoop is now ready for use !**
