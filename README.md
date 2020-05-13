@@ -1,16 +1,19 @@
 <div align="center">
-    <img src="img/icon-hidoop.png" width=150/>
-    <h1>Hidoop</h1>
-    <p>Simple <strong>Big Data Platform</strong> running <strong>MapReduce applications</strong>, inspired by <a href="https://hadoop.apache.org/">Hadoop</a></p>
+    <img src="img/header.jpg" />
+    <br/>
+    <img src="https://img.shields.io/badge/Language-Java-blue"/>
+    <br/>
+    <img src="https://img.shields.io/badge/Status-Under development-brightgreen"/> 
 </div>
 
-![Language Java](https://img.shields.io/badge/Language-Java-blue "Language Java") ![Status Development](https://img.shields.io/badge/Status-Development-brightgreen "Status Development")  
+<br/>
+**Hidoop is a platform, developed in Java, allowing the execution of applications based on MapReduce programming model on a computer cluster.**  
 
-Hidoop is a platform allowing the execution of applications based on MapReduce programming model on a computer cluster.  
-This project is a very first experiment on the theme of competing applications for intensive computing and mass data processing.  
-It consists in a lite version of Hadoop, composed of two modules:
-* :file_folder: **A distributed file-system** managing data storing on a cluster - _inspired by Hadoop Distributed File System (HDFS)_
-* :eight_spoked_asterisk: **An implementation of the MapReduce programming model** for large-scale data processing - _inspired by Hadoop MapReduce_
+This project is a very first experiment for us on the theme of competing applications for intensive computing and mass data processing.  
+
+It consists in a lite version of [Hadoop](https://hadoop.apache.org/) (developed by Apache) and it is composed of two modules:
+* :file_folder: **A distributed file-system** managing data storing on a cluster - _inspired by **H**adoop **D**istributed **F**ile **S**ystem (HDFS)_
+* :diamond_shape_with_a_dot_inside: **An implementation of the MapReduce programming model** for large-scale data processing - _inspired by Hadoop MapReduce_
 
 ## Table of contents
 <details>
@@ -40,16 +43,14 @@ It consists in a lite version of Hadoop, composed of two modules:
 
 ## Overview
 
-This application allows its user to **process large data sets across multiple servers** using the MapReduce programming model.  
-This programming model is used to **parallelize the processing of large-scale data** among a cluster.  
-Each server from the cluster processes a small part of data.
+This application allows its user to **process large data sets across multiple servers** using the MapReduce programming model. This programming model is used to **parallelize the processing of large-scale data** among a cluster. Each server from the cluster processes a small part of data.
+
 In this project, processing data takes place in 3 steps:  
 * Data (provided as a file) is cut into small chunks and spread over the servers (process managed by __HDFS__)
 * Each server processes a small part amount data (__Map__)
 * Server results are collected and aggregated (__Reduce__)
 
-__Map__ and __Reduce__ processes depend on the purpose of the MapReduce application, and can be entirely designed by user. The strength of this model lies in the parallelization of processes.  
-For example, MapReduce programming model can be use to parallelize the counting of the number of occurrences of a specific word in a large dataset.
+__Map__ and __Reduce__ processes depend on the purpose of the MapReduce application, and can be entirely designed by user. The strength of this model lies in the parallelization of processes. For example, MapReduce programming model can be use to parallelize the counting of the number of occurrences of a specific word in a large dataset.
 
 ## Getting started :pushpin:
 
@@ -73,13 +74,13 @@ Project must be cloned on a Linux system, which will be responsible for the depl
 Servers that are part of the cluster must be filled in file _config/servs.config_.
 Addresses must be written line by line as in the example below:
 
->__phosphore.enseeiht.fr__  
->azote.enseeiht.fr  
->neon.enseeiht.fr  
->carbone.enseeiht.fr  
->bore.enseeiht.fr  
+>__salameche.enseeiht.fr__  
+>carapuce.enseeiht.fr  
+>bulbizarre.enseeiht.fr  
+>nidoran.enseeiht.fr  
+>magicarpe.enseeiht.fr  
 
-Server **written first** (at the top of the list) will automatically be set as **Master Server**, i.e. the server running central processes (NameNode & JobManager).
+Server **written first** (at the top of the list) will automatically be set as **Master Server**, i.e. the server running central processes (NameNode and JobManager).
 
 #### Other settings
 
@@ -93,13 +94,13 @@ First executable files have to be **deployed** on the cluster, then the platform
 
 ### Deployment
 
-Open a terminal in project's **root folder** and execute _hidoop-init.sh_ bash script by typing following command:  
+Open a terminal in project's **root folder** and execute _hidoop-init.sh_ bash script by typing the following command:  
 ```
 ./hidoop-init.sh <username>
 ```
-**\<username\>** has to be replaced with the username to be used for SSH connection on servers (command launched within bash scripts is `ssh <username>@<serveraddress>`).
+**\<username\>** has to be replaced with the username to be used for SSH connection on servers (command launched within bash scripts is `ssh <username>@<serveraddress>`, i.e. `ssh lvincent@salameche.enseeiht.fr`).
 
-A logo signalling the begining of the deployment should appear. Deployment might take a few time.
+A logo signalling the begining of the deployment should appear. **Deployment might take a few time** because executable files are copied on each machine of the cluster.
 
 <p align="center">
   <img src="img/hidoop-init.png" alt="Screenshot showing execution of hidoop-init.sh script"/>
@@ -107,33 +108,42 @@ A logo signalling the begining of the deployment should appear. Deployment might
 
 ### Launching
 
-In a terminal in project's **root folder**, execute _hidoop-run.sh_ bash script by typing following command:  
+In a terminal in project's **root folder**, execute _hidoop-run.sh_ bash script by typing the following command:  
 ```
 ./hidoop-run.sh <username>
 ```
-**\<username\>** has to be replaced with the username to be used for SSH connection on servers (command launched within bash scripts is `ssh <username>@<serveraddress>`).
+Same remark as for the deployment, **\<username\>** has to be replaced with the username to be used for SSH connection on servers.
 
-**Two terminals** with tabs should show-up, **displaying the status** of the different entities of Hidoop running on servers.
+**Two terminals** with tabs should show-up, **displaying the status of the different entities of Hidoop** running on servers. On the left-hand terminal, you can see the status of the **NameNode** and the four **DataNodes** while on the right-hand terminal, you can identify the **JobManager** and the four **Daemons**. The role and functioning of these entities is explained more in detail in this section for the more curious.
 
 <p align="center">
   <img src="img/hidoop-run.png" alt="Screenshot showing execution of hidoop-run.sh script"/>
 <br/>
 
-Hidoop is now ready for use.
+**Hidoop is now ready for use !**
+
+## Shutdown
+
+After closing the two terminals launched by Hidoop, execute _hidoop-clear.sh__ bash script, at the root of the project's folder by typing the following command:
+```
+./hidoop-clear.sh <username>
+```
+Same remark as for the deployment, **\<username\>** has to be replaced with the username to be used for SSH connection on servers.
+The process Java: NameNode, DataNode, JobManager and Daemon should be killed and the data stored on each server should be erased.
+
 
 ## Spread data on servers using HDFS :file_folder:
 
-To run MapReduce applications processing data, the data must first be distributed on the cluster.
-HDFS is the module of Hidoop used to **write data across the cluster**.  
-Data is cut into small chunks and spread over the servers.  
-In this project, HDFS provides 3 main functionnalities:
+To run MapReduce applications processing data, **the data must first be distributed on the cluster** using **HDFS**. Data is cut into small chunks and spread over the servers.  
 
+In this project, HDFS provides 3 main functionnalities:
 * **Write data :** cut a provided file into chunk and spread them over the servers
 * **Read data :** retrieve data that has been written on servers by _write_ process in order to rebuild the original file
 * **Delete data :** delete data stored by servers concerning a specified file
 
 The following instructions can only work if Hidoop platform is running on the cluster (see section above).  
-:warning: ***This project is still under development, please do not try to proceed any meaningful data without making a copy.***
+
+:warning: ***Do not operate on sensitive data without first making a copy it, it could be destroyed without your permission !***
 
 
 ### Data Format
