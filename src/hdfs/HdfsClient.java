@@ -43,6 +43,8 @@ public class HdfsClient {
 			+ "could not be retrieved from NameNode";
 	private static final String replicationFactorError = errorHeader + "<replicationfactor> "
 			+ "must be a strictly positive integer";
+	private static final String dataNodeConnectionError = errorHeader + "Could not establish "
+			+ "TCP connection with DataNode";
 
 	/**
 	 * Buffer size constant
@@ -71,7 +73,7 @@ public class HdfsClient {
 		Socket socket;
 		ObjectOutputStream socketOutputStream;
 		byte[] buf;
-		int chunkCounter = 0;
+		int portNumber, chunkCounter = 0;
 		long index = 0;
 
 		System.out.println(messageHeader
@@ -94,8 +96,11 @@ public class HdfsClient {
 			try {
 				nameNodeResponse = nameNode.writeChunkRequest(repFactor);
 				dataNode = (DataNode) Naming.lookup("//"+nameNodeResponse.get(0)+":"+SettingsManager.PORT_DATANODE+"/DataNode");
-				socket = new Socket(nameNodeResponse.get(0), 
-						dataNode.processChunk(Command.CMD_WRITE, fileName, chunkCounter));
+				if ((portNumber = dataNode.processChunk(Command.CMD_WRITE, fileName, chunkCounter)) == -1) {
+					System.err.println(dataNodeConnectionError);
+					return;
+				}
+				socket = new Socket(nameNodeResponse.get(0), portNumber);
 				socketOutputStream = new ObjectOutputStream(socket.getOutputStream());
 				socketOutputStream.writeObject(nameNodeResponse.size());
 				for (int i = 1 ; i < nameNodeResponse.size() ; i++) {
@@ -156,7 +161,7 @@ public class HdfsClient {
 		ObjectInputStream socketInputStream;
 		BufferedOutputStream bos;
 		Object objectReceived;
-		int nbRead, chunkNumber, chunkHandle = 0, chunkCounter = 0;
+		int nbRead, portNumber, chunkNumber, chunkHandle = 0, chunkCounter = 0;
 		byte[] buf = new byte[bufferSize];
 		boolean chunkRead = false;
 
@@ -184,7 +189,11 @@ public class HdfsClient {
 			while (!chunkRead && chunkHandle < chunkHandles.size()) {
 				try {
 					dataNode = (DataNode) Naming.lookup("//"+chunkHandles.get(chunkHandle)+":"+SettingsManager.PORT_DATANODE+"/DataNode");
-					socket = new Socket(chunkHandles.get(chunkHandle), dataNode.processChunk(Command.CMD_READ, fileName, chunkCounter));
+					if ((portNumber = dataNode.processChunk(Command.CMD_READ, fileName, chunkCounter)) == -1) {
+						System.err.println(dataNodeConnectionError);
+						return;
+					}
+					socket = new Socket(chunkHandles.get(chunkHandle), portNumber);
 					socketInputStream = new ObjectInputStream(socket.getInputStream());
 					if ((objectReceived = socketInputStream.readObject()) instanceof Command 
 							&& (Command) objectReceived == Command.CMD_READ

@@ -17,7 +17,6 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
-import java.util.Random;
 
 import config.SettingsManager;
 import config.SettingsManager.Command;
@@ -38,7 +37,7 @@ public class DataNodeImpl extends UnicastRemoteObject implements DataNode {
 			+ "chunks on this server for file ";
 	private static final String nameNodeNotBoundError = errorHeader + "NameNode is not "
 			+ "bound in registry, leaving process";
-	
+
 	/**
 	 * Master NameNode.
 	 */
@@ -55,7 +54,6 @@ public class DataNodeImpl extends UnicastRemoteObject implements DataNode {
 	 * (Nested class)
 	 */
 	class TaskExecutor implements Runnable {
-		private int port;
 		private Command command;
 		private String fileName;
 		private int chunkNumber;
@@ -68,16 +66,11 @@ public class DataNodeImpl extends UnicastRemoteObject implements DataNode {
 		 * @param fileName
 		 * @param chunkNumber
 		 */
-		public TaskExecutor(int port, Command command, String fileName, int chunkNumber) {
+		public TaskExecutor(ServerSocket serverSocket, Command command, String fileName, int chunkNumber) {
 			this.command = command;
-			this.port = port;
 			this.fileName = fileName;
 			this.chunkNumber = chunkNumber;
-			try {
-				this.serverSocket = new ServerSocket(this.port);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+			this.serverSocket = serverSocket;
 		}
 
 		@Override
@@ -232,20 +225,15 @@ public class DataNodeImpl extends UnicastRemoteObject implements DataNode {
 
 	@Override
 	public int processChunk(SettingsManager.Command command, String fileName, int chunkNumber) {
-		boolean avalaiblePortFound = false;
-		ServerSocket testSocket;
-		int maxTry = 10000, counter = 0, port = (new Random()).nextInt(63000) + 2000;
-		while (!avalaiblePortFound && counter < maxTry) {
-			try {
-				testSocket = new ServerSocket(port);
-				testSocket.close();
-				(new Thread(new TaskExecutor(port, command, fileName, chunkNumber))).start();
-				avalaiblePortFound = true;
-			} catch (IOException ex) {} //Port is occupied
-			counter++;
+		ServerSocket serverSocket;
+		try {
+			serverSocket = new ServerSocket(0);
+			(new Thread(new TaskExecutor(serverSocket, command, fileName, chunkNumber))).start();
+			return serverSocket.getLocalPort();
+		} catch (IOException e) {
+			e.printStackTrace();
+			return -1;
 		}
-		if (counter == maxTry) return -1;
-		else return port;
 	}		
 
 	/**
