@@ -1,10 +1,11 @@
 package hdfs;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
+ * A FileData object stores metadata of a file written on HDFS.
  */
 public class FileData implements Serializable {
 	private static final long serialVersionUID = 1L;
@@ -22,7 +23,7 @@ public class FileData implements Serializable {
 	 * Keys (Integer) : ID of the chunks
 	 * ArrayList<String> : Servers where copies are stored
 	 */
-	private ConcurrentHashMap<Integer,ArrayList<String>> chunkHandles;
+	private ConcurrentHashMap<Integer,CopyOnWriteArrayList<String>> chunkHandles;
 
 	/**
 	 * Constructor.
@@ -35,7 +36,7 @@ public class FileData implements Serializable {
 		this.fileSize = fileSize;
 		this.chunkSize = chunkSize;
 		this.replicationFactor = replicationFactor;
-		this.chunkHandles = new ConcurrentHashMap<Integer,ArrayList<String>>();
+		this.chunkHandles = new ConcurrentHashMap<Integer,CopyOnWriteArrayList<String>>();
 	}
 
 	/**
@@ -48,7 +49,7 @@ public class FileData implements Serializable {
 		if (this.chunkHandles.containsKey(chunkId)) {
 			this.chunkHandles.get(chunkId).add(server);
 		} else {
-			ArrayList<String> value = new ArrayList<String>();
+			CopyOnWriteArrayList<String> value = new CopyOnWriteArrayList<String>();
 			value.add(server);
 			this.chunkHandles.put(chunkId, value);
 		}
@@ -67,14 +68,13 @@ public class FileData implements Serializable {
 		return true;
 	}
 	
-	
 	/**
 	 * Get locations of all copies of specified chunk.
 	 * 
 	 * @param chunkId ID of the chunk
 	 * @return
 	 */
-	public ArrayList<String> getChunkHandle(int chunkId) {
+	public CopyOnWriteArrayList<String> getChunkHandle(int chunkId) {
 		return this.chunkHandles.get(chunkId);
 	}
 
@@ -115,7 +115,7 @@ public class FileData implements Serializable {
 		this.replicationFactor = replicationFactor;
 	}
 
-	public ConcurrentHashMap<Integer, ArrayList<String>> getChunkHandles() {
+	public ConcurrentHashMap<Integer, CopyOnWriteArrayList<String>> getChunkHandles() {
 		return chunkHandles;
 	}
 }

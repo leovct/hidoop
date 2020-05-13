@@ -17,7 +17,6 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
-import java.util.Random;
 
 import config.SettingsManager;
 import config.SettingsManager.Command;
@@ -38,7 +37,7 @@ public class DataNodeImpl extends UnicastRemoteObject implements DataNode {
 			+ "chunks on this server for file ";
 	private static final String nameNodeNotBoundError = errorHeader + "NameNode is not "
 			+ "bound in registry, leaving process";
-	
+
 	/**
 	 * Master NameNode.
 	 */
@@ -48,14 +47,18 @@ public class DataNodeImpl extends UnicastRemoteObject implements DataNode {
 	 * Address of the server the DataNode is running on.
 	 */
 	private String serverAddress;
-
+	
+	/**
+	 * Path to data on the server.
+	 */
+	private String dataPath;
+	
 	/**
 	 * Runnable class performing operations
 	 * when NameNode receives a command
 	 * (Nested class)
 	 */
 	class TaskExecutor implements Runnable {
-		private int port;
 		private Command command;
 		private String fileName;
 		private int chunkNumber;
@@ -68,16 +71,11 @@ public class DataNodeImpl extends UnicastRemoteObject implements DataNode {
 		 * @param fileName
 		 * @param chunkNumber
 		 */
-		public TaskExecutor(int port, Command command, String fileName, int chunkNumber) {
+		public TaskExecutor(ServerSocket serverSocket, Command command, String fileName, int chunkNumber) {
 			this.command = command;
-			this.port = port;
 			this.fileName = fileName;
 			this.chunkNumber = chunkNumber;
-			try {
-				this.serverSocket = new ServerSocket(this.port);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+			this.serverSocket = serverSocket;
 		}
 
 		@Override
@@ -120,7 +118,7 @@ public class DataNodeImpl extends UnicastRemoteObject implements DataNode {
 			}
 			try { //Receive chunk
 				bos = new BufferedOutputStream(new FileOutputStream(
-						SettingsManager.DATA_FOLDER+fileName+SettingsManager.TAG_DATANODE+this.chunkNumber), bufferSize);
+						dataPath+fileName+SettingsManager.TAG_DATANODE+this.chunkNumber), bufferSize);
 				while((nbRead = socketInputStream.read(buf)) != -1) { 
 					bos.write(buf, 0, nbRead);
 				}
@@ -130,7 +128,7 @@ public class DataNodeImpl extends UnicastRemoteObject implements DataNode {
 				this.serverSocket.close();
 				System.out.println(messageHeader + "Chunk received : "+fileName+SettingsManager.TAG_DATANODE+this.chunkNumber);
 				if (repFactor > 1) { //Propagate chunk
-					DataNode dataNode = (DataNode) Naming.lookup("//"+copiesLocations.get(0)+":"+SettingsManager.PORT_DATANODE+"/DataNode");
+					DataNode dataNode = (DataNode) Naming.lookup("//"+copiesLocations.get(0)+":"+SettingsManager.getPortDataNode()+"/DataNode");
 					socketPropagateChunkCopy = new Socket(copiesLocations.get(0), 
 							dataNode.processChunk(Command.CMD_WRITE, fileName, this.chunkNumber));
 					socketOutputStream = new ObjectOutputStream(socketPropagateChunkCopy.getOutputStream());
@@ -139,7 +137,7 @@ public class DataNodeImpl extends UnicastRemoteObject implements DataNode {
 						socketOutputStream.writeObject(server);
 					}
 					bis = new BufferedInputStream(new FileInputStream(
-							SettingsManager.DATA_FOLDER+fileName+SettingsManager.TAG_DATANODE+this.chunkNumber), bufferSize);
+							dataPath+fileName+SettingsManager.TAG_DATANODE+this.chunkNumber), bufferSize);
 					while((nbRead = bis.read(buf)) != -1) {
 						socketOutputStream.write(buf, 0, nbRead);
 					}
@@ -167,9 +165,9 @@ public class DataNodeImpl extends UnicastRemoteObject implements DataNode {
 			try {
 				Socket communicationSocket = serverSocket.accept();
 				socketOutputStream = new ObjectOutputStream(communicationSocket.getOutputStream());
-				if ((new File(SettingsManager.DATA_FOLDER+fileName+SettingsManager.TAG_DATANODE+chunkNumber)).exists()) {
+				if ((new File(dataPath+fileName+SettingsManager.TAG_DATANODE+chunkNumber)).exists()) {
 					bis = new BufferedInputStream(new FileInputStream(
-							SettingsManager.DATA_FOLDER+fileName+SettingsManager.TAG_DATANODE+chunkNumber), bufferSize);
+							dataPath+fileName+SettingsManager.TAG_DATANODE+chunkNumber), bufferSize);
 					socketOutputStream.writeObject(Command.CMD_READ);
 					socketOutputStream.writeObject(fileName);
 					socketOutputStream.writeObject(chunkNumber);
@@ -180,7 +178,7 @@ public class DataNodeImpl extends UnicastRemoteObject implements DataNode {
 					System.out.println(messageHeader + "Chunk n°" + chunkNumber + " from file " + fileName
 							+ " sent to client");
 				} else System.err.println(chunkNotFoundError 
-						+ " : " +SettingsManager.DATA_FOLDER+fileName+SettingsManager.TAG_DATANODE+chunkNumber);
+						+ " : " +dataPath+fileName+SettingsManager.TAG_DATANODE+chunkNumber);
 				socketOutputStream.close();
 				communicationSocket.close();
 				this.serverSocket.close();
@@ -195,15 +193,15 @@ public class DataNodeImpl extends UnicastRemoteObject implements DataNode {
 		private void delete() {
 			boolean chunkFound = false;
 			int chunkNumber;
-			for (String file : (new File(SettingsManager.DATA_FOLDER)).list()) {
+			for (String file : (new File(dataPath)).list()) {
 				if (file.startsWith(fileName+SettingsManager.TAG_DATANODE)) {
 					try {
 						chunkNumber = Integer.parseInt(file.substring((fileName+SettingsManager.TAG_DATANODE).length(),
 								file.length()));
-						if ((new File(SettingsManager.DATA_FOLDER+file)).delete()) {
+						if ((new File(dataPath+file)).delete()) {
 							nameNode.chunkDeleted(fileName, chunkNumber, serverAddress);
 							System.out.println(messageHeader + "Chunk deleted : "
-									+SettingsManager.DATA_FOLDER+fileName+SettingsManager.TAG_DATANODE+chunkNumber);
+									+dataPath+fileName+SettingsManager.TAG_DATANODE+chunkNumber);
 						} else System.err.println(errorHeader + "Could not delete file " + file);
 					} catch (RemoteException e) {
 						System.out.println(nameNodeNotBoundError);
@@ -224,28 +222,24 @@ public class DataNodeImpl extends UnicastRemoteObject implements DataNode {
 	 * @param nameNode stub for the NameNode of the (unique) cluster this DataNode belongs to
 	 * @throws RemoteException
 	 */
-	protected DataNodeImpl(NameNode nameNode, String serverAddress) throws RemoteException {
+	protected DataNodeImpl(NameNode nameNode, String serverAddress, String dataPath) throws RemoteException {
 		this.nameNode = nameNode;
 		this.serverAddress = serverAddress;
+		this.dataPath = dataPath;
 		this.nameNode.notifyNameNodeAvailability(this.serverAddress);
 	}
 
 	@Override
 	public int processChunk(SettingsManager.Command command, String fileName, int chunkNumber) {
-		boolean avalaiblePortFound = false;
-		ServerSocket testSocket;
-		int maxTry = 10000, counter = 0, port = (new Random()).nextInt(63000) + 2000;
-		while (!avalaiblePortFound && counter < maxTry) {
-			try {
-				testSocket = new ServerSocket(port);
-				testSocket.close();
-				(new Thread(new TaskExecutor(port, command, fileName, chunkNumber))).start();
-				avalaiblePortFound = true;
-			} catch (IOException ex) {} //Port is occupied
-			counter++;
+		ServerSocket serverSocket;
+		try {
+			serverSocket = new ServerSocket(0);
+			(new Thread(new TaskExecutor(serverSocket, command, fileName, chunkNumber))).start();
+			return serverSocket.getLocalPort();
+		} catch (IOException e) {
+			e.printStackTrace();
+			return -1;
 		}
-		if (counter == maxTry) return -1;
-		else return port;
 	}		
 
 	/**
@@ -266,15 +260,17 @@ public class DataNodeImpl extends UnicastRemoteObject implements DataNode {
 		if (args.length == 1) {
 			System.out.println(messageHeader + "DataNode starting...");
 			try{
-				LocateRegistry.createRegistry(SettingsManager.PORT_DATANODE);
+				LocateRegistry.createRegistry(SettingsManager.getPortDataNode());
 			} catch(Exception e) {}
 			try { //Connection to NameNode and initialization
 				NameNode nameNode = (NameNode) Naming.lookup(
-						"//"+SettingsManager.getMasterNodeAddress()+":"+SettingsManager.PORT_NAMENODE+"/NameNode");
-				Naming.bind("//"+args[0]+":"+SettingsManager.PORT_DATANODE+"/DataNode", new DataNodeImpl(nameNode, args[0]));
+						"//"+SettingsManager.getMasterNodeAddress()+":"+SettingsManager.getPortNameNode()+"/NameNode");
+				String dataPath = SettingsManager.getDataPath();
+				if (dataPath == null) return;
+				Naming.bind("//"+args[0]+":"+SettingsManager.getPortDataNode()+"/DataNode", new DataNodeImpl(nameNode, args[0],dataPath));
 				System.out.println(messageHeader + "DataNode bound in registry");
-				if (!(new File(SettingsManager.DATA_FOLDER).exists())) {
-					(new File(SettingsManager.DATA_FOLDER)).mkdirs(); //Create data directory
+				if (!(new File(dataPath).exists())) {
+					(new File(dataPath)).mkdirs(); //Create data directory
 				}
 			} catch (NotBoundException e) {
 				System.err.println(nameNodeNotBoundError);
