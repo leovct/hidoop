@@ -252,6 +252,18 @@ Keep in mind that *the time saving will only be noticeable on very large files (
 
 ### QuasiMonteCarlo application
 
+We have developed a MapReduce version of the **QuasiMonteCarlo** algorithm. It generates a number of X points in a unit square during the Map operation and then calculates the number of points inside the circle inscribed in this square during the Reduce operation. It then derives an approximation of 𝝅.
+
+This application is **complementary to the WordCount application** because it does not take a file as a parameter on which to execute operations. Moreover, the application does not manage the distribution of Map and Reduce operations on the cluster in the same way. Indeed, since no Map operation is performed on chunks because the application does not take a file in parameter, a Map and Reduce operation is launched on each available daemon.
+
+We chose to implement this algorithm rather than Donald Knuth's DLX (Dancing Link X) algorithm, which deals with exact coverage problems (i.e. solving a Sudoku) because the performance gain is more convincing on the QuasiMonteCarlo algorithm. Nevertheless, **other MapReduce algorithms will be implemented later such as the Google Page Ranking algorithm**.
+
+To launch the QuasiMonteCarlo application, simply go to the root of the directory and run the following command:
+```
+java -cp bin application.QuasiMonteCarlo_MapReduce
+```
+Note: By default, the application generates 10⁶ points per Daemon.
+
 ## Performance analysis :zap:
 
 ### Test 1: Variation in file size
