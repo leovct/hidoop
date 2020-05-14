@@ -203,6 +203,7 @@ public class JobClient implements JobInterface {
 		// Retrieving map results
 		try {
 			HdfsClient.HdfsRead(getOutputFname() , getOutputFname());
+			HdfsClient.HdfsDelete(getOutputFname());
 		} catch (Exception e) {
 			e.printStackTrace();
 		} 
