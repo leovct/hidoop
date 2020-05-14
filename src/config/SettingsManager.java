@@ -27,6 +27,11 @@ public class SettingsManager {
 	public static final String TAG_RESULT = "resf-";
 	
 	/**
+	 * Folder for client's application results. 
+	 */
+	public static final String RESULTS_FOLDER = "results/";
+	
+	/**
 	 * Path to servers configuration file.
 	 */
 	public static final String SERVERS_CONFIG = System.getProperty("java.class.path") + "/config/servers.config";

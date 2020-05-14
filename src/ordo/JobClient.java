@@ -19,8 +19,8 @@ public class JobClient implements JobInterface {
 	private Format.Type outputFormat;
 	private Format.Type resReduceFormat;
 	private String inputFName;
-	private String outputFName;
-	private String resReduceFName;
+	private String outputFName = SettingsManager.RESULTS_FOLDER;
+	private String resReduceFName = SettingsManager.RESULTS_FOLDER;
 	private int nbMaps; 
 	private List<ArrayList<String>> chunkList = new ArrayList<ArrayList<String>>();
 	private long jobId;
@@ -35,9 +35,9 @@ public class JobClient implements JobInterface {
 		this.inputFormat = inputFormat;
 		this.inputFName = temp;
 		this.outputFormat = Format.Type.KV;
-		this.outputFName = SettingsManager.TAG_MAP + temp;
+		this.outputFName += SettingsManager.TAG_MAP + temp;
 		this.resReduceFormat = Format.Type.KV;
-		this.resReduceFName = SettingsManager.TAG_RESULT + temp;
+		this.resReduceFName += SettingsManager.TAG_RESULT + temp;
 	}
 	
 	// Constructor in case of map requiring no file in input
@@ -45,9 +45,9 @@ public class JobClient implements JobInterface {
 		this.inputFormat = null;
 		this.inputFName = null;
 		this.outputFormat = Format.Type.KV;
-		this.outputFName = SettingsManager.TAG_MAP + name;
+		this.outputFName += SettingsManager.TAG_MAP + name;
 		this.resReduceFormat = Format.Type.KV;
-		this.resReduceFName = SettingsManager.TAG_RESULT + name;
+		this.resReduceFName += SettingsManager.TAG_RESULT + name;
 	}
 
 	public void startJob (MapReduce mr) {
@@ -151,7 +151,7 @@ public class JobClient implements JobInterface {
 
 			// In case of map requiring no file in input
 			} else {
-				chunk = getOutputFname() + SettingsManager.TAG_DATANODE + i ;
+				chunk = getOutputFname().split(SettingsManager.RESULTS_FOLDER)[1] + SettingsManager.TAG_DATANODE + i ;
 				try {
 					machine = jm.submitMap(jobId, i, null);
 				} catch (RemoteException e) {
