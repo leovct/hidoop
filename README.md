@@ -7,7 +7,7 @@
 </div>
 
 <br/>
-**Hidoop is a platform, developed in Java, allowing the execution of applications based on MapReduce programming model on a computer cluster.**  
+**Hidoop is a platform developed in Java, allowing the execution of applications based on MapReduce programming model on a computer cluster.**  
 
 This project is a very first experiment for us on the theme of competing applications for intensive computing and mass data processing.  
 
