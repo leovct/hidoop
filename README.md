@@ -1,7 +1,7 @@
 <div align="center">
     <img src="img/header.jpg" />
     <br/>
-    <img src="https://img.shields.io/badge/Language-Java-blue"/>
+    <img src="https://img.shields.io/badge/Language-Java-B07219"/>
     <br/>
     <img src="https://img.shields.io/badge/Status-Under development-brightgreen"/> 
 </div>
