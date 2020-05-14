@@ -40,15 +40,6 @@ It consists in a lite version of [Hadoop](https://hadoop.apache.org/) (developed
 - [**Run a MapReduce application on the cluster** :diamond_shape_with_a_dot_inside:](#run-a-mapreduce-application-on-the-cluster-diamond-shape-with-a-dot-inside)
     - [Application WordCount](#application-wordcount)
     - [Application QuasiMonteCarlo](#application-quasimontecarlo)
-- [**Performance analysis** :zap:](#performance-analysis-zap)
-    - [Test 1: Variation in file size](#test-1-variation-in-file-size)
-    - [Test 2: Variation in the number of servers](#test-2-variation-in-the-number-of-servers)
-    - [Test 3: Variation in the number of chunks](#test-3-variation-in-the-number-of-chunks)
-- [**Application's functioning** :gear:](#application-s-functioning-gear)
-    - [Improvements over the first version of Hidoop](#improvements-over-the-first-version-of-hidoop)
-    - [HDFS more in-depth](#hdfs-more-in-depth)
-    - [Hidoop more in depth](#hidoop-more-in-depth)
-- [**Possible improvements** :bulb:](#possible-improvements-bulb)
 - [**Contributors** :busts_in_silhouette:](#contributors-busts_in_silhouette)
 </details>
 
@@ -263,24 +254,6 @@ To launch the QuasiMonteCarlo application, simply go to the root of the director
 java -cp bin application.QuasiMonteCarlo_MapReduce
 ```
 Note: By default, the application generates 10⁶ points per Daemon.
-
-## Performance analysis :zap:
-
-### Test 1: Variation in file size
-
-### Test 2: Variation in the number of servers
-
-### Test 3: Variation in the number of chunks
-
-## Application's functioning :gear:
-
-### Improvements over the first version of Hidoop
-
-### HDFS more in-depth
-
-### Hidoop more in-depth
-
-## Possible improvements :bulb:
 
 ## Contributors :busts_in_silhouette:
 
