@@ -157,6 +157,9 @@ public class HdfsClient {
 		String fileName = ((hdfsFname.contains("/")) //Removes path from file name
 				? hdfsFname.substring(hdfsFname.lastIndexOf('/')+1) : 
 					((hdfsFname.contains("\\")) ? hdfsFname.substring(hdfsFname.lastIndexOf('\\')+1) : hdfsFname));
+		String outputFileFolder = ((localFSDestFname.contains("/"))
+				? localFSDestFname.substring(0,localFSDestFname.lastIndexOf('/')+1) : 
+					((localFSDestFname.contains("\\")) ? localFSDestFname.substring(0,localFSDestFname.lastIndexOf('\\')+1) : null));
 		Socket socket;
 		ObjectInputStream socketInputStream;
 		BufferedOutputStream bos;
@@ -184,13 +187,16 @@ public class HdfsClient {
 			e.printStackTrace();
 			return;
 		}
+		if ((outputFileFolder != null) && !(new File(outputFileFolder).exists())) {
+			(new File(outputFileFolder)).mkdirs(); //Create output file directory
+			System.out.println("Created folder " + outputFileFolder);
+		}
 		for (ArrayList<String> chunkHandles : nameNodeResponse) {
 			chunkHandle = 0;
 			while (!chunkRead && chunkHandle < chunkHandles.size()) {
 				try {
 					dataNode = (DataNode) Naming.lookup("//"+chunkHandles.get(chunkHandle)+":"+SettingsManager.getPortDataNode()+"/DataNode");
 					if ((portNumber = dataNode.processChunk(Command.CMD_READ, fileName, chunkCounter)) == -1) {
-						System.err.println(dataNodeConnectionError);
 						return;
 					}
 					socket = new Socket(chunkHandles.get(chunkHandle), portNumber);
