@@ -2,8 +2,7 @@
     <img src="img/header.png" />
 </div>
 
-<img src="https://img.shields.io/badge/Language-Java-B07219"/>
-<img src="https://img.shields.io/badge/Status-Under%20Development-brightgreen"/> 
+![Language Java](https://img.shields.io/badge/Language-Java-B07219 "Language") ![Status Under Development](https://img.shields.io/badge/Status-Under%20Development-brightgreen "Status")
 
 **Hidoop is a platform developed in Java, allowing the execution of applications based on MapReduce programming model on a computer cluster.**  
 
