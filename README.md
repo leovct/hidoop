@@ -1,5 +1,5 @@
 <div align="center">
-    <img src="img/header.jpg" />
+    <img src="img/header.png" />
     <br/>
     <img src="https://img.shields.io/badge/Language-Java-B07219"/>
     <br/>
