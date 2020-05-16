@@ -16,27 +16,28 @@ It consists in a lite version of [Hadoop](https://hadoop.apache.org/) (developed
 <summary>Click to expand</summary>
 
 - [**Overview**](#overview)
-- [**Getting started** :pushpin:](#getting-started-pushpin)
+- [**Getting started** :pushpin:](#getting-started-)
     - [Prerequisites](#prerequisites)
     - [Installation](#installation)
     - [Configuration](#configuration)
         - [Servers addresses](#servers-addresses)
         - [Other settings](#other-settings)
-- [**Run Hidoop** :rocket:](#run-hidoop-rocket)
+- [**Run Hidoop** :rocket:](#run-hidoop-)
     - [Deployment](#deployment)
     - [Launching](#launching)
     - [Shutdown](#shutdown)
-- [**Spread data on the cluster using HDFS** :file_folder:](#spread-data-on-the-cluster-using-hdfs-file_folder)
+- [**Spread data on the cluster using HDFS** :file_folder:](#spread-data-on-the-cluster-using-hdfs-)
     - [Data Format](#data-format)
         - [Line format](#line-format)
         - [KV format](#kv-format)
     - [Write a file on HDFS](#write-a-file-on-hdfs)
     - [Read a file from HDFS](#read-a-file-from-hdfs)
     - [Delete a file from HDFS](#delete-a-file-from-hdfs)
-- [**Run a MapReduce application on the cluster** :diamond_shape_with_a_dot_inside:](#run-a-mapreduce-application-on-the-cluster-diamond-shape-with-a-dot-inside)
-    - [Application WordCount](#application-wordcount)
-    - [Application QuasiMonteCarlo](#application-quasimontecarlo)
-- [**Contributors** :busts_in_silhouette:](#contributors-busts_in_silhouette)
+- [**Run a MapReduce application on the cluster** :diamond_shape_with_a_dot_inside:](#run-a-mapreduce-application-on-the-cluster-)
+    - [WordCount application](#wordcount-application)
+    - [QuasiMonteCarlo application](#quasimontecarlo-application)
+    - [PageRank application](#pagerank-application)
+- [**Contributors** :busts_in_silhouette:](#contributors-)
 </details>
 
 ## Overview
@@ -218,7 +219,7 @@ java -cp bin hdfs.HdfsClient delete <sourcefilename>
 
 ## Run a MapReduce application on the cluster :diamond_shape_with_a_dot_inside:
 
-MapReduce application models are given in _src/application_ package (see _WordCount\_MapReduce.java_ and _MonteCarlo\_MapReduce.java_).  
+MapReduce application models are given in _src/application_ package.  
 
 :warning: **The following instructions can only work if Hidoop platform is running on the cluster and the data is spread within the cluster.**
 
@@ -267,6 +268,28 @@ To launch the QuasiMonteCarlo application, simply and run the following command 
 java -cp bin application.QuasiMonteCarlo_MapReduce
 ```
 Note: By default, the application generates 10⁶ points per Daemon.
+
+### PageRank application
+
+The **PageRank** application is based on Google's page ranking algorithm developed by Larry Page. This algorithm allows to rank web pages in Google's search results. 
+
+The principle is to assign to each page a value (or page rank) proportional to the number of times a user would pass by this page while surfing on the Web (by clicking on links on other pages). For more details on this algorithm, don't hesitate to watch this Youtube video series.
+
+Note: The performance gain is visible only if you run the algorithm on **large graphs** (the web is huge, hence the usefulness of the MapReduce version).
+In the data/ folder, we have provided you with two files small-network and big-network which represent small and medium size networks (4 pages for the first one and 26 for the second one).
+
+To launch the PageRank application, simply go to the prject's root folder and run the following command: 
+```
+java -cp bin application.PageRank_MapReduce <filename> <numberiterations>
+```
+* *\<filename\>* is the network on which you want to calculate page rank values.
+* *\<numberiterations\>* is the number of iterations you want to run. The higher the number, the more the algorithm converges.
+
+> Example of use: 
+>
+> To run the PageRank algorithm on the small network, execute the command:  
+> ```java -cp bin application.PageRank_MapReduce data/small-network 3```  
+> Note: Very few iterations are needed to converge in such a simple case (here, 3 iterations is enough to observe convergence).
 
 ## Contributors :busts_in_silhouette:
 
