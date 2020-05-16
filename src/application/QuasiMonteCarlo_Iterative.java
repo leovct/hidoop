@@ -6,8 +6,8 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 
 /**
- * QuasiMonteCarlo iterative algorithm (should specify nbr of points generated in arg)
- *
+ * QuasiMonteCarlo iterative algorithm which approximate the value of PI.
+ * Note: The precision depends on the number of points generated (10^6 is the default value).
  */
 public class QuasiMonteCarlo_Iterative {
 
@@ -17,7 +17,7 @@ public class QuasiMonteCarlo_Iterative {
 	public static void main(String[] args) {
 		long t1 = System.currentTimeMillis();
 		
-		// GENERATE POINTS
+		// Generate points
 		long inside = 0;
 		for(long i = 1; i <= pointsGeneratedPerMap; i++) {
 			// Produce a point using random (should use halton sequence)
@@ -33,11 +33,12 @@ public class QuasiMonteCarlo_Iterative {
 			
 			// Display the msg when i/5th points have been generated
 			if (i % (pointsGeneratedPerMap/5) == 0) {
-				System.out.println("QuasiMonteCarlo: Generated " + i + " points");
+				System.out.println("[QUASIMONTECARLO] Generated " + i + " points");
+				
 			}
 		}
 		
-		// WRITE RESULTS
+		// Write results
 		try {
 			writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("quasi-monte-carlo-iterative-res")));
 			writer.write("insideCircle"+"<->"+inside);
@@ -48,10 +49,10 @@ public class QuasiMonteCarlo_Iterative {
 			e.printStackTrace();
 		}		
 		
-		// DISPLAY RESULTS AND COMPUTATION TIME
+		// Display results and computation time
 		long t2 = System.currentTimeMillis();
-		System.out.println("Computation time for the QuasiMonteCarlo iterative algorithm: "+(t2-t1)+"ms");
-        System.out.println("PI approximate value: " + (double)4*inside/pointsGeneratedPerMap);
+		System.out.println("[QUASIMONTECARLO] Computation time for the Iterative version: " + (t2-t1) + "ms");
+        System.out.println("[QUASIMONTECARLO] PI approximate value: " + (double)4*inside/pointsGeneratedPerMap);
 	}
 	
 }
