@@ -16,28 +16,28 @@ It consists in a lite version of [Hadoop](https://hadoop.apache.org/) (developed
 <summary>Click to expand</summary>
 
 - [**Overview**](#overview)
-- [**Getting started** :pushpin:](#getting-started-)
+- [**Getting started** :pushpin:](#getting-started-pushpin)
     - [Prerequisites](#prerequisites)
     - [Installation](#installation)
     - [Configuration](#configuration)
         - [Servers addresses](#servers-addresses)
         - [Other settings](#other-settings)
-- [**Run Hidoop** :rocket:](#run-hidoop-)
+- [**Run Hidoop** :rocket:](#run-hidoop-rocket)
     - [Deployment](#deployment)
     - [Launching](#launching)
     - [Shutdown](#shutdown)
-- [**Spread data on the cluster using HDFS** :file_folder:](#spread-data-on-the-cluster-using-hdfs-)
+- [**Spread data on the cluster using HDFS** :file_folder:](#spread-data-on-the-cluster-using-hdfs-file_folder)
     - [Data Format](#data-format)
         - [Line format](#line-format)
         - [KV format](#kv-format)
     - [Write a file on HDFS](#write-a-file-on-hdfs)
     - [Read a file from HDFS](#read-a-file-from-hdfs)
     - [Delete a file from HDFS](#delete-a-file-from-hdfs)
-- [**Run a MapReduce application on the cluster** :diamond_shape_with_a_dot_inside:](#run-a-mapreduce-application-on-the-cluster-)
+- [**Run a MapReduce application on the cluster** :diamond_shape_with_a_dot_inside:](#run-a-mapreduce-application-on-the-cluster-diamond_shape_with_a_dot_inside)
     - [WordCount application](#wordcount-application)
     - [QuasiMonteCarlo application](#quasimontecarlo-application)
     - [PageRank application](#pagerank-application)
-- [**Contributors** :busts_in_silhouette:](#contributors-)
+- [**Contributors** :busts_in_silhouette:](#contributors-busts_in_silhouette)
 </details>
 
 ## Overview
