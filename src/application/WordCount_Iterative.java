@@ -10,6 +10,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
 
+import config.SettingsManager;
+
 /**
  * WordCount iterative algorithm.
  * It calculates the number of times each word appears in a file.
@@ -37,7 +39,7 @@ public class WordCount_Iterative {
 					}
 				}
 			}
-			BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("wordcount-iterative-res")));
+			BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(SettingsManager.RESULTS_FOLDER + "wordcount-iterative-res")));
 			for (String k : hm.keySet()) {
 				writer.write(k+"<->"+hm.get(k).toString());
 				writer.newLine();

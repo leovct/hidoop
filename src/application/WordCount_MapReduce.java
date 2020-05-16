@@ -55,7 +55,7 @@ public class WordCount_MapReduce implements MapReduce {
         long time = System.currentTimeMillis();
 		j.startJob(new WordCount_MapReduce());
 		time = System.currentTimeMillis() - time;
-		System.out.println("[WORDCOUNT] Computation time for the Iterative version: " + time + "ms");
+		System.out.println("[WORDCOUNT] Computation time for the MapReduce version: " + time + "ms");
         System.exit(0);
 		}
 }

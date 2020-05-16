@@ -5,6 +5,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 
+import config.SettingsManager;
+
 /**
  * QuasiMonteCarlo iterative algorithm which approximate the value of PI.
  * Note: The precision depends on the number of points generated (10^6 is the default value).
@@ -40,7 +42,7 @@ public class QuasiMonteCarlo_Iterative {
 		
 		// Write results
 		try {
-			writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("quasi-monte-carlo-iterative-res")));
+			writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(SettingsManager.RESULTS_FOLDER + "quasi-monte-carlo-iterative-res")));
 			writer.write("insideCircle"+"<->"+inside);
 			writer.newLine();
 			writer.write("insideSquare"+"<->"+pointsGeneratedPerMap);
