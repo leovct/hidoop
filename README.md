@@ -34,7 +34,7 @@ It consists in a lite version of [Hadoop](https://hadoop.apache.org/) (developed
     - [QuasiMonteCarlo application](#quasimontecarlo-application)
     - [PageRank application](#pagerank-application)
 - [**How the Hidoop application works :gear:**](#how-the-hidoop-application-works-gear)
-    - [Details on the Hidoop distributed file system](#details-on-the-hidoop-distributed-file-system)
+    - [Details on HDFS](#details-on-hdfs)
     - [Details on the implementation of the MapReduce concept](#details-on-the-implementation-of-the-mapreduce-concept)
 - [**Next Development Stages :bulb:**](#next-development-stages)
 - [**Contributors** :busts_in_silhouette:](#contributors-busts_in_silhouette)
