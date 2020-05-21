@@ -339,50 +339,40 @@ The DataNode deletes the chunk and notifies the NameNode.
 
 ### Details on the implementation of the MapReduce concept
 
-The **JobManager** is the Java process, that has a similar role to the NameNode but on the application side. Thus, the JobManager allows to manage available daemons, callbacks and to optimize resources especially when launching maps. It also allows to keep track of the Jobs launched and would allow in a future version to manage failures during a map.
+The implementation of the MapReduce concept is composed of 2 major entities: **JobManager** and **Daemon**.
 
-The **Daemon** is the Java process that execute an action defined by the **Map** operation. The results of each map will be aggregated and returned to the client thanks to the **Reduce** operation.
+The **JobManager** is the Java process, that has a similar role to the *NameNode* but on the application side.
+It supervises all the *Daemons* Map and Reduce's ongoing operations within the cluster.
+It also keeps track of the *Jobs* launched and would allow, in a future version, to manage failures during a map.
 
-Here's the general algorithm of a Job's workflow :
+The **Daemon** is the Java process that execute an action defined by the **Map** operation.
+The results of each map will be aggregated and returned to the client thanks to the **Reduce** operation.
 
-**Method** startJob(MapReduce)  
-&nbsp;&nbsp;&nbsp;&nbsp;Registration of the Job with the JobManager  
-&nbsp;&nbsp;&nbsp;&nbsp;listDemons ← Retrieving the list of demons from the JobManager  
-&nbsp;&nbsp;&nbsp;&nbsp;**If** the application requires an input file **then**  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;listFragments ← Retrieving the list of fragments with the NameNode  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;numberMaps ← length(listFragments)  
-&nbsp;&nbsp;&nbsp;&nbsp;**Else**   
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;numberMaps ← length(listDemons)  
-&nbsp;&nbsp;&nbsp;&nbsp;**End if**  
-&nbsp;&nbsp;&nbsp;&nbsp;**For** i from 0 to numberMaps **do**  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;machine ← Retrieving the server on which to launch the map with NameNode and JobManager  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Launch the map on machine  
-&nbsp;&nbsp;&nbsp;&nbsp;**End for**  
-&nbsp;&nbsp;&nbsp;&nbsp;**While** there are still maps being made **do**  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Asks the JobManager how many maps are completed  
-&nbsp;&nbsp;&nbsp;&nbsp;**End while**  
-&nbsp;&nbsp;&nbsp;&nbsp;Read the result file of the map thanks to HDFS  
-&nbsp;&nbsp;&nbsp;&nbsp;Start reduce operation  
+A **Job** executes the Map and Reduce methods of a MapReduce application (*i.e. WordCount_MapReduce*) within the cluster.
+It will retrieve the list of *Daemons* available thanks to the *JobManager*.
+It will also retrieve the list of fragments if the application requires an input file, written in *HDFS*. 
+Then the Job will execute the Map operations and ask the *JobManager* for the progress of operations until all the maps are done.
+At the very end, it will read the result file of the map thanks to **HDFS** and start the Reduce operation.
 
 ## Next Development Stages :bulb:
 
 ### HDFS service
-* Parallelization of client-side operations *(HdfsClient)*
-* Cluster monitoring improvement *(NameNode)*
-* Implementation of an HDFS Shell, facilitating the use of the file system
-* Global architecture improvement
-* Implementation of new file formats
+* **Parallelization of client-side operations** *(HdfsClient)*.
+* **Cluster monitoring** improvement *(NameNode)*.
+* **Implementation of an HDFS Shell**, facilitating the use of the file system.
+* **Global architecture improvement**.
+* **Implementation of new file formats**.
 
-### Map-Reduce concept implementation 
-* **Set up the parallelization of the Reduce**.
-* **Manage breakdowns during the course of an application**.
-* **Optimize the distribution of resources** according to the CPU used for example (currently according to the number of maps per server).
-* **Make sure that the Job is executed on a cluster node and not on the client machine** (to get closer to the real Hadoop architecture).
-* **Improve the Job interface to make it more generic** and accessible to other types of MapReduce applications.
+### MapReduce concept implementation 
+* **Parallelization of the Reduce** operation.
+* **Manage breakdowns** during the course of a MapReduce application.
+* **Optimize the distribution of resources** according to the CPU used for example (currently distributed according to the number of maps per server).
+* **Make sure that the Job is executed on a cluster node** and not on the client machine (to get closer to the real *Hadoop* architecture).
+* **Improve the Job interface** to make it more generic and accessible to other types of MapReduce applications.
 
 ### MapReduce applications developed
-* In the **PageRank** application, add a whole part allowing to analyze a web page with jsoup in order to find all the links (existing web pages and web pages which do not exist any more).
-* **Develop more applications based on the MapReduce concept** : for example algorithms on the exact coverage like Donald Knuth's DLX Algorithm allowing to solve sudokus or other puzzles of that kind.
+* In the PageRank application, **add a whole part allowing to analyze a web page with [Jsoup](https://jsoup.org/)** in order to find all the links (existing web pages and web pages which do not exist any more).
+* **Develop more applications** based on the MapReduce concept (i.e. algorithms on the exact coverage like *Donald Knuth's DLX* algorithm allowing to solve sudokus or other puzzles of that kind).
 
 ## Contributors :busts_in_silhouette:
 
