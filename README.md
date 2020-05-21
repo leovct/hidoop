@@ -36,7 +36,7 @@ It consists in a lite version of [Hadoop](https://hadoop.apache.org/) (developed
 - [**How the Hidoop application works :gear:**](#how-the-hidoop-application-works-gear)
     - [Details on HDFS](#details-on-hdfs)
     - [Details on the implementation of the MapReduce concept](#details-on-the-implementation-of-the-mapreduce-concept)
-- [**Next Development Stages :bulb:**](#next-development-stages)
+- [**Next Development Stages :bulb:**](#next-development-stages-bulb)
 - [**Contributors** :busts_in_silhouette:](#contributors-busts_in_silhouette)
 </details>
 
