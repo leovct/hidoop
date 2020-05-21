@@ -33,7 +33,7 @@ It consists in a lite version of [Hadoop](https://hadoop.apache.org/) (developed
     - [WordCount application](#wordcount-application)
     - [QuasiMonteCarlo application](#quasimontecarlo-application)
     - [PageRank application](#pagerank-application)
-- [**How the Hidoop application works :gear:**](#how-the-hidoop-application-works-gear)
+- [**How Hidoop works :gear:**](#how-hidoop-works-gear)
     - [Details on HDFS](#details-on-hdfs)
     - [Details on the implementation of the MapReduce concept](#details-on-the-implementation-of-the-mapreduce-concept)
 - [**Next development stages :bulb:**](#next-development-stages-bulb)
@@ -310,7 +310,7 @@ java -cp bin application.PageRank_MapReduce <filename> <numberiterations>
 > ```java -cp bin application.PageRank_MapReduce data/small-network 3```  
 > Note: Very few iterations are needed to converge in such a simple case (here, 3 iterations is enough to observe convergence).
 
-## How the Hidoop application works :gear:
+## How Hidoop works :gear:
 
 ### Details on HDFS
 
