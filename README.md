@@ -343,7 +343,7 @@ The implementation of the MapReduce concept is composed of 2 major entities: **J
 
 The **JobManager** is the Java process, that has a similar role to the *NameNode* but on the application side.
 It supervises all the *Daemons* Map and Reduce's ongoing operations within the cluster.
-It also keeps track of the *Jobs* launched and would allow, in a future version, to manage failures during a map.
+It also keeps track of the *Jobs* launched and would allow, in a future version, to manage failures during a Map operation.
 
 The **Daemon** is the Java process that execute an action defined by the **Map** operation.
 The results of each map will be aggregated and returned to the client thanks to the **Reduce** operation.
@@ -352,7 +352,7 @@ A **Job** executes the Map and Reduce methods of a MapReduce application (*i.e. 
 It will retrieve the list of *Daemons* available thanks to the *JobManager*.
 It will also retrieve the list of fragments if the application requires an input file, written in *HDFS*. 
 Then the Job will execute the Map operations and ask the *JobManager* for the progress of operations until all the maps are done.
-At the very end, it will read the result file of the map thanks to **HDFS** and start the Reduce operation.
+At the very end, it will read the result file of the map thanks to *HDFS* and start the Reduce operation.
 
 ## Next Development Stages :bulb:
 
