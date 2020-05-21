@@ -36,7 +36,7 @@ It consists in a lite version of [Hadoop](https://hadoop.apache.org/) (developed
 - [**How the Hidoop application works :gear:**](#how-the-hidoop-application-works-gear)
     - [Details on HDFS](#details-on-hdfs)
     - [Details on the implementation of the MapReduce concept](#details-on-the-implementation-of-the-mapreduce-concept)
-- [**Next Development Stages :bulb:**](#next-development-stages-bulb)
+- [**Next development stages :bulb:**](#next-development-stages-bulb)
 - [**Contributors** :busts_in_silhouette:](#contributors-busts_in_silhouette)
 </details>
 
@@ -354,7 +354,7 @@ It will also retrieve the list of fragments if the application requires an input
 Then the Job will execute the Map operations and ask the *JobManager* for the progress of operations until all the maps are done.
 At the very end, it will read the result file of the map thanks to *HDFS* and start the Reduce operation.
 
-## Next Development Stages :bulb:
+## Next development stages :bulb:
 
 ### HDFS service
 * **Parallelization of client-side operations** *(HdfsClient)*.
